@@ -110,7 +110,9 @@ CHTSPConnection::~CHTSPConnection()
 CStdString CHTSPConnection::GetWebURL ( const char *fmt, ... )
 {
   va_list va;
-  CStdString auth, url;
+  CStdString auth;
+  char url[2048];
+  size_t c;
 
   {
     CLockObject lock(g_mutex);
@@ -119,13 +121,15 @@ CStdString CHTSPConnection::GetWebURL ( const char *fmt, ... )
       auth += ":" + g_strPassword;
     if (auth != "")
       auth += "@";
-    url.Format("http://%s%s:%d", auth.c_str(), g_strHostname.c_str(), g_iPortHTTP);
+    c = snprintf(url, sizeof(url), "http://%s%s:%d", auth.c_str(), g_strHostname.c_str(), g_iPortHTTP);
   }
 
   CLockObject lock(m_mutex);
   va_start(va, fmt);
-  url += m_webRoot;
-  url.AppendFormatV(fmt, va);
+  // add webroot
+  c += snprintf(url+c, sizeof(url)-c, "%s", m_webRoot.c_str());
+  // append user format
+  vsnprintf(url+c, sizeof(url)-c, fmt, va);
   va_end(va);
 
   return url;
@@ -150,20 +154,20 @@ const char *CHTSPConnection::GetServerName ( void )
 
 const char *CHTSPConnection::GetServerVersion ( void )
 {
-  static CStdString str;
+  static char str[128];
   CLockObject lock(m_mutex);
-  str.Format("%s (HTSPv%d)", m_serverVersion.c_str(), m_htspVersion);
-  return str.c_str();
+  snprintf(str, sizeof(str), "%s (HTSPv%d)", m_serverVersion.c_str(), m_htspVersion);
+  return str;
 }
 
 const char *CHTSPConnection::GetServerString ( void )
 {
-  static CStdString str;
+  static char str[128];
   CLockObject lock1(g_mutex);
   CLockObject lock2(m_mutex);
-  str.Format("%s:%d [%s]", g_strHostname.c_str(), g_iPortHTSP,
-             m_ready ? "connected" : "disconnected");
-  return str.c_str();
+  snprintf(str, sizeof(str), "%s:%d [%s]", g_strHostname.c_str(), g_iPortHTSP,
+           m_ready ? "connected" : "disconnected");
+  return str;
 }
 
 /*
