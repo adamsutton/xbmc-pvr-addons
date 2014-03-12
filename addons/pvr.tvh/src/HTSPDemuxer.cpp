@@ -386,6 +386,15 @@ void CHTSPDemuxer::ParseMuxPacket ( htsmsg_t *m )
     tvherror("malformed muxpkt");
     return;
   }
+  
+  /* Check that the stream is known, drop the packet if not */
+  int iStreamId = m_streams.GetStreamId(idx);
+  
+  if (iStreamId < 0)
+  {
+    tvhtrace("demux drop pkt");
+    return;
+  }
 
   /* Record */
   m_streamStat[idx]++;
@@ -395,6 +404,8 @@ void CHTSPDemuxer::ParseMuxPacket ( htsmsg_t *m )
     return;
   memcpy(pkt->pData, bin, binlen);
   pkt->iSize = binlen;
+
+  pkt->iStreamId = iStreamId;
 
   /* Duration */
   if (!htsmsg_get_u32(m, "duration", &u32))
@@ -417,18 +428,8 @@ void CHTSPDemuxer::ParseMuxPacket ( htsmsg_t *m )
   if (!type)
     type = '_';
 
-  /* Find the stream */
-  pkt->iStreamId = m_streams.GetStreamId(idx);
   tvhtrace("demux pkt idx %d:%d type %c pts %lf len %lld",
            idx, pkt->iStreamId, type, pkt->pts, (long long)binlen);
-
-  /* Drop (could be done earlier) */
-  if (pkt->iStreamId < 0)
-  {
-    tvhtrace("demux drop pkt");
-    PVR->FreeDemuxPacket(pkt);
-    return;
-  }
 
   /* Store */
   m_pktBuffer.Push(pkt);
