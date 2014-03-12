@@ -406,7 +406,7 @@ bool CHTSPConnection::SendHello ( void )
   return true;
 }
 
-bool CHTSPConnection::SendAuth
+void CHTSPConnection::SendAuth
   ( const CStdString &user, const CStdString &pass )
 {
   htsmsg_t *msg = htsmsg_create_map();
@@ -425,20 +425,12 @@ bool CHTSPConnection::SendAuth
   free(sha);
 
   /* Send and Wait */
-  if (!(msg = SendAndWait0("authenticate", msg))) 
-  {
-    tvherror("auth response not received");
-    return false;
-  }
+  if (!(msg = SendAndWait0("authenticate", msg)))
+    throw new AuthException("No auth response receieved");
 
   /* Auth denied */
   if (htsmsg_get_u32_or_default(msg, "noaccess", 0) != 0)
-  {
-    tvherror("auth denied");
-    return false;
-  }
-
-  return true;
+    throw new AuthException("Invalid username or password");
 }
 
 /**
@@ -464,8 +456,15 @@ void CHTSPConnection::Register ( void )
 
     /* Send Auth */
     tvhdebug("sending auth");
-    if (!SendAuth(user, pass)) {
-      tvherror("failed to send auth");
+    
+    try
+    {
+      SendAuth(user, pass);
+    }
+    catch (AuthException *e)
+    {
+      XBMC->QueueNotification(QUEUE_ERROR, "Authenication failed: %s", e->what());
+      tvherror("Authenication failed: %s", e->what());
       goto fail;
     }
 
@@ -492,6 +491,7 @@ fail:
 void* CHTSPConnection::Process ( void )
 {
   static bool log = false;
+  static unsigned int retryAttempt = 1;
 
   while (!IsStopped())
   {
@@ -501,7 +501,7 @@ void* CHTSPConnection::Process ( void )
       CLockObject lock(g_mutex);
       host    = g_strHostname;
       port    = g_iPortHTSP;
-      timeout = g_iConnectTimeout;
+      timeout = g_iConnectTimeout * 1000;
     }
 
     /* Create socket (ensure mutex protection) */
@@ -526,14 +526,28 @@ void* CHTSPConnection::Process ( void )
 
     /* Connect */
     tvhtrace("waiting for connection...");
-    if (!m_socket->Open(timeout * 1000))
+    if (!m_socket->Open(timeout))
     {
-      tvherror("failed to connect to server");
-      Sleep(500); // TODO: Re-try period
+      /* Unable to connect, inform the user */
+      tvherror("unable to connect to %s:%d", host.c_str(), port);
+      XBMC->QueueNotification(QUEUE_ERROR, "Unable to connect to %s:%d", host.c_str(), port);
+      
+      // Retry a few times with a short interval, after that with the default timeout
+      int retryTimeout;
+
+      if (retryAttempt <= FAST_RECONNECT_TRIES)
+        retryTimeout = FAST_RECONNECT_INTERVAL;
+      else
+        retryTimeout = timeout;
+
+      Sleep(retryTimeout);
+      ++retryAttempt;
+      
       continue;
     }
     tvhdebug("connected");
     log = false;
+    retryAttempt = 1;
 
     /* Start connect thread */
     m_regThread.CreateThread(true);
