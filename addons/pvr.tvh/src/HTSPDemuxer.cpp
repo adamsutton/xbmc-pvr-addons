@@ -392,7 +392,7 @@ void CHTSPDemuxer::ParseMuxPacket ( htsmsg_t *m )
   
   if (iStreamId < 0)
   {
-    tvhtrace("demux drop pkt");
+    tvherror("Demuxer packet dropped (unknown stream %i)", iStreamId);
     return;
   }
 
