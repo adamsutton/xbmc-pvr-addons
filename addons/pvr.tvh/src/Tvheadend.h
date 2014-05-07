@@ -159,6 +159,7 @@ public:
   bool        WaitForConnection ( void );
 
   inline PLATFORM::CMutex& Mutex ( void ) { return m_mutex; }
+  inline SSettings Settings() { return m_settings; }
   
 private:
   void*       Process          ( void );
