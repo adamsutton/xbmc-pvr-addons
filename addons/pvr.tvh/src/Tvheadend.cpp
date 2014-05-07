@@ -628,7 +628,7 @@ PVR_ERROR CTvheadend::GetEpg
     htsmsg_add_s64(msg, "maxTime",   end);
 
     /* Send and Wait */
-    if ((msg = m_conn.SendAndWait0("getEvents", msg)) == NULL)
+    if ((msg = m_conn.SendAndWait("getEvents", msg)) == NULL)
     {
       tvherror("failed to request epg");
       return PVR_ERROR_SERVER_ERROR;
