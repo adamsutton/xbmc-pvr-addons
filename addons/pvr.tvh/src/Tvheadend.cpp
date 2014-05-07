@@ -39,9 +39,9 @@ using namespace std;
 using namespace ADDON;
 using namespace PLATFORM;
 
-CTvheadend::CTvheadend()
-  : m_dmx(m_conn), m_vfs(m_conn), m_asyncState(ASYNC_NONE),
-    m_asyncComplete(false)
+CTvheadend::CTvheadend(SSettings settings)
+  : m_settings(settings), m_conn(settings), m_dmx(m_conn), m_vfs(m_conn), 
+    m_asyncState(ASYNC_NONE), m_asyncComplete(false)
 {
 }
 

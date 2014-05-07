@@ -156,7 +156,18 @@ ADDON_STATUS ADDON_Create(void* hdl, void* _unused(props))
 
   ADDON_ReadSettings();
   
-  tvh = new CTvheadend;
+  // Generate settings struct which we'll pass along. This way there is no need 
+  // to lock the global mutex just to read a setting value
+  SSettings settings;
+  settings.hostname = g_strHostname;
+  settings.username = g_strUsername;
+  settings.password = g_strPassword;
+  settings.portHTSP = g_iPortHTSP;
+  settings.portHTTP = g_iPortHTTP;
+  settings.connectTimeout = g_iConnectTimeout;
+  settings.responseTimeout = g_iResponseTimeout;
+  
+  tvh = new CTvheadend(settings);
 
   /* Wait for connection */
   if (!tvh->WaitForConnection()) {

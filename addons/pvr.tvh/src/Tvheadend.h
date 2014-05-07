@@ -135,7 +135,7 @@ class CHTSPConnection
   friend class CHTSPRegister;
 
 public:
-  CHTSPConnection();
+  CHTSPConnection(SSettings &settings);
   ~CHTSPConnection();
 
   void Disconnect  ( void );
@@ -167,6 +167,7 @@ private:
   bool        SendHello        ( void );
   void        SendAuth         ( const CStdString &u, const CStdString &p );
 
+  SSettings                           m_settings;
   PLATFORM::CTcpSocket               *m_socket;
   PLATFORM::CMutex                    m_mutex;
   CHTSPRegister                       m_regThread;
@@ -288,7 +289,7 @@ private:
 class CTvheadend
 {
 public:
-  CTvheadend();
+  CTvheadend(SSettings settings);
   ~CTvheadend();
 
   bool Connected      ( void );
@@ -325,6 +326,7 @@ private:
   uint32_t GetNextUnnumberedChannelNumber();
   
   PLATFORM::CMutex            m_mutex;
+  SSettings                   m_settings;
   
   CHTSPConnection             m_conn;
   CHTSPDemuxer                m_dmx;
