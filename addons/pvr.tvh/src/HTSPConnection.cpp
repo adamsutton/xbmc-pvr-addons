@@ -133,7 +133,7 @@ bool CHTSPConnection::WaitForConnection ( void )
 {
   if (!m_ready) {
     tvhtrace("waiting for registration...");
-    m_regCond.Wait(m_mutex, m_ready, m_settings.connectTimeout);
+    m_regCond.Wait(m_mutex, m_ready, m_settings.connectTimeout * 1000);
   }
   return m_ready;
 }
