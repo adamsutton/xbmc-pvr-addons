@@ -667,13 +667,6 @@ PVR_ERROR CTvheadend::GetEpg
  * Connection
  * *************************************************************************/
 
-void CTvheadend::Disconnected ( void )
-{
-  CLockObject lock(m_mutex);
-  m_asyncComplete = false;
-  m_asyncState    = ASYNC_NONE;
-}
-
 bool CTvheadend::Connected ( void )
 {
   htsmsg_t *msg;

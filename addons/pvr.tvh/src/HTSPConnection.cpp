@@ -508,21 +508,16 @@ void* CHTSPConnection::Process ( void )
 
   while (!IsStopped())
   {
-    CStdString host;
-    int port, timeout;
-    {
-      CLockObject lock(g_mutex);
-      host    = g_strHostname;
-      port    = g_iPortHTSP;
-      timeout = g_iConnectTimeout * 1000;
-    }
+    std::string host = m_settings.hostname;
+    int port = m_settings.portHTSP;
+    int timeout = m_settings.connectTimeout;
 
     /* Create socket (ensure mutex protection) */
     {
       CLockObject lock(m_mutex);
       if (m_socket)
         delete m_socket;
-      tvh->Disconnected();
+
       if (!log)
         tvhdebug("connecting to %s:%d", host.c_str(), port);
       else

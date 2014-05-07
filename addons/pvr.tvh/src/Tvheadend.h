@@ -291,7 +291,6 @@ public:
   CTvheadend();
   ~CTvheadend();
 
-  void Disconnected   ( void );
   bool Connected      ( void );
   bool ProcessMessage ( const char *method, htsmsg_t *msg );
 
