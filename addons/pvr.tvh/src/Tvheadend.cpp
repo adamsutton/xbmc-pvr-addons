@@ -39,9 +39,9 @@ using namespace std;
 using namespace ADDON;
 using namespace PLATFORM;
 
-CTvheadend::CTvheadend()
-  : m_dmx(m_conn), m_vfs(m_conn), m_asyncState(ASYNC_NONE),
-    m_asyncComplete(false)
+CTvheadend::CTvheadend(SSettings settings)
+  : m_settings(settings), m_conn(settings), m_dmx(m_conn), m_vfs(m_conn), 
+    m_asyncState(ASYNC_NONE), m_asyncComplete(false)
 {
 }
 
@@ -600,7 +600,7 @@ PVR_ERROR CTvheadend::GetEpg
   if (g_bAsyncEpg)
   {
     CLockObject lock(m_mutex);
-    if (!m_asyncCond.Wait(m_mutex, m_asyncComplete, 5000))
+    if (!m_asyncCond.Wait(m_mutex, m_asyncComplete, m_settings.connectTimeout))
       return PVR_ERROR_NO_ERROR;
 
     sit = m_schedules.find(chn.iUniqueId);
@@ -628,7 +628,7 @@ PVR_ERROR CTvheadend::GetEpg
     htsmsg_add_s64(msg, "maxTime",   end);
 
     /* Send and Wait */
-    if ((msg = m_conn.SendAndWait0("getEvents", msg)) == NULL)
+    if ((msg = m_conn.SendAndWait("getEvents", msg)) == NULL)
     {
       tvherror("failed to request epg");
       return PVR_ERROR_SERVER_ERROR;
@@ -666,13 +666,6 @@ PVR_ERROR CTvheadend::GetEpg
 /* **************************************************************************
  * Connection
  * *************************************************************************/
-
-void CTvheadend::Disconnected ( void )
-{
-  CLockObject lock(m_mutex);
-  m_asyncComplete = false;
-  m_asyncState    = ASYNC_NONE;
-}
 
 bool CTvheadend::Connected ( void )
 {

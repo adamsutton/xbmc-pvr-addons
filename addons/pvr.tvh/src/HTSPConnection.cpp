@@ -89,8 +89,8 @@ void *CHTSPRegister::Process ( void )
  * HTSP Connection handler
  */
 
-CHTSPConnection::CHTSPConnection ()
-  : m_socket(NULL), m_regThread(this), m_ready(false), m_seq(0),
+CHTSPConnection::CHTSPConnection (SSettings &settings)
+  : m_settings(settings), m_socket(NULL), m_regThread(this), m_ready(false), m_seq(0),
     m_serverName(""), m_serverVersion(""), m_htspVersion(0),
     m_webRoot(""), m_challenge(NULL), m_challengeLen(0)
 {
@@ -113,15 +113,12 @@ CStdString CHTSPConnection::GetWebURL ( const char *fmt, ... )
   va_list va;
   CStdString auth, url;
 
-  {
-    CLockObject lock(g_mutex);
-    auth = g_strUsername;
-    if (auth != "" && g_strPassword != "")
-      auth += ":" + g_strPassword;
-    if (auth != "")
-      auth += "@";
-    url.Format("http://%s%s:%d", auth.c_str(), g_strHostname.c_str(), g_iPortHTTP);
-  }
+  auth = m_settings.username;
+  if (auth != "" && m_settings.password != "")
+    auth += ":" + m_settings.password;
+  if (auth != "")
+    auth += "@";
+  url.Format("http://%s%s:%d", auth.c_str(), m_settings.hostname.c_str(), m_settings.portHTTP);
 
   CLockObject lock(m_mutex);
   va_start(va, fmt);
@@ -136,7 +133,7 @@ bool CHTSPConnection::WaitForConnection ( void )
 {
   if (!m_ready) {
     tvhtrace("waiting for registration...");
-    m_regCond.Wait(m_mutex, m_ready, g_iConnectTimeout);
+    m_regCond.Wait(m_mutex, m_ready, m_settings.connectTimeout * 1000);
   }
   return m_ready;
 }
@@ -160,9 +157,8 @@ const char *CHTSPConnection::GetServerVersion ( void )
 const char *CHTSPConnection::GetServerString ( void )
 {
   static CStdString str;
-  CLockObject lock1(g_mutex);
   CLockObject lock2(m_mutex);
-  str.Format("%s:%d [%s]", g_strHostname.c_str(), g_iPortHTSP,
+  str.Format("%s:%d [%s]", m_settings.hostname.c_str(), m_settings.portHTSP,
              m_ready ? "connected" : "disconnected");
   return str.c_str();
 }
@@ -216,7 +212,7 @@ bool CHTSPConnection::ReadMessage ( void )
   cnt = 0;
   while (cnt < len)
   {
-    r = m_socket->Read((char*)buf + cnt, len - cnt, g_iResponseTimeout * 1000);
+    r = m_socket->Read((char*)buf + cnt, len - cnt, m_settings.responseTimeout * 1000);
     if (r < 0)
     {
       tvherror("failed to read packet (%s)",
@@ -319,7 +315,7 @@ bool CHTSPConnection::SendMessage ( const char *method, htsmsg_t *msg )
 htsmsg_t *CHTSPConnection::SendAndWait0 ( const char *method, htsmsg_t *msg, int iResponseTimeout )
 {
   if (iResponseTimeout == -1)
-    iResponseTimeout = g_iResponseTimeout;
+    iResponseTimeout = m_settings.responseTimeout;
   
   uint32_t seq;
 
@@ -355,7 +351,7 @@ htsmsg_t *CHTSPConnection::SendAndWait0 ( const char *method, htsmsg_t *msg, int
 htsmsg_t *CHTSPConnection::SendAndWait ( const char *method, htsmsg_t *msg, int iResponseTimeout )
 {
   if (iResponseTimeout == -1)
-    iResponseTimeout = g_iResponseTimeout;
+    iResponseTimeout = m_settings.responseTimeout;
   
   if (!WaitForConnection())
     return NULL;
@@ -451,12 +447,6 @@ void CHTSPConnection::SendAuth
  */
 void CHTSPConnection::Register ( void )
 {
-  CStdString user, pass;
-  {
-    CLockObject lock(g_mutex);
-    user = g_strUsername;
-    pass = g_strPassword;
-  }
   {
     CLockObject lock(m_mutex);
 
@@ -472,7 +462,7 @@ void CHTSPConnection::Register ( void )
     
     try
     {
-      SendAuth(user, pass);
+      SendAuth(m_settings.username, m_settings.password);
     }
     catch (AuthException *e)
     {
@@ -508,21 +498,16 @@ void* CHTSPConnection::Process ( void )
 
   while (!IsStopped())
   {
-    CStdString host;
-    int port, timeout;
-    {
-      CLockObject lock(g_mutex);
-      host    = g_strHostname;
-      port    = g_iPortHTSP;
-      timeout = g_iConnectTimeout * 1000;
-    }
+    std::string host = m_settings.hostname;
+    int port = m_settings.portHTSP;
+    int timeout = m_settings.connectTimeout;
 
     /* Create socket (ensure mutex protection) */
     {
       CLockObject lock(m_mutex);
       if (m_socket)
         delete m_socket;
-      tvh->Disconnected();
+
       if (!log)
         tvhdebug("connecting to %s:%d", host.c_str(), port);
       else

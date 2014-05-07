@@ -53,6 +53,16 @@ enum eHTSPEventType
   HTSP_EVENT_REC_UPDATE = 4,
 };
 
+struct SSettings {
+    std::string username;
+    std::string password;
+    std::string hostname;
+    int portHTSP;
+    int portHTTP;
+    int connectTimeout;
+    int responseTimeout;
+};
+
 struct STag
 {
   bool                  del;
