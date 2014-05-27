@@ -20,6 +20,9 @@ lib_pvr_tvh_addon_la_SOURCES = src/client.cpp \
                                src/HTSPConnection.cpp \
                                src/HTSPDemuxer.cpp \
                                src/HTSPVFS.cpp \
-                               src/CircBuffer.cpp
+                               src/CircBuffer.cpp \
+                               src/CGUIDialogRecord.cpp \
+                               src/CGUIDialogDeleteTimer.cpp \
+                               src/utilities.cpp
 lib_pvr_tvh_addon_la_LDFLAGS = @TARGET_LDFLAGS@
 

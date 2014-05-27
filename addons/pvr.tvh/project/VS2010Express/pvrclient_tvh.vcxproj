@@ -91,12 +91,18 @@
     <ClCompile Include="..\..\src\HTSPDemuxer.cpp" />
     <ClCompile Include="..\..\src\HTSPVFS.cpp" />
     <ClCompile Include="..\..\src\Tvheadend.cpp" />
+    <ClCompile Include="..\..\src\CGUIDialogRecord.cpp" />
+    <ClCompile Include="..\..\src\CGUIDialogDeleteTimer.cpp" />
+    <ClCompile Include="..\..\src\utilities.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\CircBuffer.h" />
     <ClInclude Include="..\..\src\client.h" />
     <ClInclude Include="..\..\src\HTSPTypes.h" />
     <ClInclude Include="..\..\src\Tvheadend.h" />
+    <ClCompile Include="..\..\src\CGUIDialogRecord.h" />
+    <ClCompile Include="..\..\src\CGUIDialogDeleteTimer.h" />
+    <ClCompile Include="..\..\src\utilities.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
