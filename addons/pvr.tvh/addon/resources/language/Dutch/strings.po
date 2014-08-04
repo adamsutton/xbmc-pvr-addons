@@ -100,3 +100,60 @@ msgstr "Verbinding met '%s' verbroken"
 msgctxt "#31001"
 msgid "Reconnected to '%s'"
 msgstr "Verbinding met '%s' hersteld"
+
+#recording options
+msgctxt "#31020"
+msgid "Recording preference"
+msgstr "Opname voorkeur"
+
+msgctxt "#31021"
+msgid "Record once"
+msgstr "Eénmalig"
+
+msgctxt "#31022"
+msgid "Record every time"
+msgstr "Elke keer"
+
+msgctxt "#31023"
+msgid "Record every week at this time"
+msgstr "Elke week rond deze tijd"
+
+msgctxt "#31024"
+msgid "Record every day at this time"
+msgstr "Elke dag rond deze tijd"
+
+msgctxt "#31025"
+msgid "Record weekdays"
+msgstr "Enkel weekdagen"
+
+msgctxt "#31026"
+msgid "Record weekends"
+msgstr "Enkel weekends"
+
+msgctxt "#31027"
+msgid "Delete timer or schedule?"
+msgstr "Verwijder timer of opname schema?"
+
+msgctxt "#31028"
+msgid "Delete this timer only"
+msgstr "Verwijder enkel deze timer"
+
+msgctxt "#31029"
+msgid "Delete the complete schedule"
+msgstr "Verwijder het volledige opname schema"
+
+msgctxt "#30008"
+msgid "Days: ;Mon,;Tue,;Wed,;Thu,;Fri,;Sat,;Sun,;All"
+msgstr "Dagen: ;Ma,;Di,;Wo,;Do,;Vr,;Za,;Zo,;Alle"
+
+msgctxt "#30009"
+msgid "Around time: "
+msgstr "Rond tijdstip: "
+
+msgctxt "#30010"
+msgid "always"
+msgstr "altijd"
+
+msgctxt "#30011"
+msgid "Attention, timer '%s' is part of a schedule!"
+msgstr "Waarschuwing, timer '%s' is onderdeel van een opname schema!"

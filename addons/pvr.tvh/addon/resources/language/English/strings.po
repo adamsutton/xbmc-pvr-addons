@@ -101,3 +101,60 @@ msgstr ""
 msgctxt "#31001"
 msgid "Reconnected to '%s'"
 msgstr ""
+
+#recording options
+msgctxt "#31020"
+msgid "Recording preference"
+msgstr ""
+
+msgctxt "#31021"
+msgid "Record once"
+msgstr ""
+
+msgctxt "#31022"
+msgid "Record every time"
+msgstr ""
+
+msgctxt "#31023"
+msgid "Record every week at this time"
+msgstr ""
+
+msgctxt "#31024"
+msgid "Record every day at this time"
+msgstr ""
+
+msgctxt "#31025"
+msgid "Record weekdays"
+msgstr ""
+
+msgctxt "#31026"
+msgid "Record weekends"
+msgstr ""
+
+msgctxt "#31027"
+msgid "Delete timer or schedule?"
+msgstr ""
+
+msgctxt "#31028"
+msgid "Delete this timer only"
+msgstr ""
+
+msgctxt "#31029"
+msgid "Delete the complete schedule"
+msgstr ""
+
+msgctxt "#30008"
+msgid "Days: ;Mon,;Tue,;Wed,;Thu,;Fri,;Sat,;Sun,;All"
+msgstr ""
+
+msgctxt "#30009"
+msgid "Around time: "
+msgstr ""
+
+msgctxt "#30010"
+msgid "always"
+msgstr ""
+
+msgctxt "#30011"
+msgid "Attention, timer '%s' is part of a schedule!"
+msgstr ""
