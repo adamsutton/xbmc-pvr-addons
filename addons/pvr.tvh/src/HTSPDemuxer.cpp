@@ -41,7 +41,7 @@ using namespace ADDON;
 using namespace PLATFORM;
 
 CHTSPDemuxer::CHTSPDemuxer ( CHTSPConnection &conn )
-  : m_conn(conn), m_started(false), m_pktBuffer((size_t)-1),
+  : m_conn(conn), m_pktBuffer((size_t)-1),
     m_seekTime(INVALID_SEEKTIME)
 {
 }
@@ -72,7 +72,6 @@ void CHTSPDemuxer::Close0 ( void )
     SendUnsubscribe();
 
   /* Clear */
-  m_started = false;
   Flush();
   Abort0();
 }
@@ -98,7 +97,6 @@ bool CHTSPDemuxer::Open ( const PVR_CHANNEL &chn )
   m_subscription.channelId = chn.iUniqueId;
 
   /* Open */
-  m_started = false;
   SendSubscribe();
   
   /* Send unsubscribe if subscribing failed */
@@ -377,7 +375,14 @@ void CHTSPDemuxer::ParseMuxPacket ( htsmsg_t *m )
   DemuxPacket *pkt;
   char        _unused(type) = 0;
   int         iStreamId;
-
+  
+  /* Ignore packets while switching channels */
+  if (!m_subscription.active)
+  {
+    tvhdebug("Ignored mux packet due to channel switch");
+    return;
+  }
+  
   /* Validate fields */
   if (htsmsg_get_u32(m, "stream", &idx) ||
       htsmsg_get_bin(m, "payload", &bin, &binlen))
@@ -509,6 +514,15 @@ void CHTSPDemuxer::ParseSubscriptionStart ( htsmsg_t *m )
       {
         stream.iWidth   = htsmsg_get_u32_or_default(&f->hmf_msg, "width", 0);
         stream.iHeight  = htsmsg_get_u32_or_default(&f->hmf_msg, "height", 0);
+        
+        /* Ignore this message if the stream details haven't been determined 
+           yet, a new message will be sent once they have. This is fixed in 
+           some versions of tvheadend and is here for backward compatibility. */
+        if (stream.iWidth == 0 || stream.iHeight == 0)
+        {
+          tvhinfo("Ignoring subscriptionStart, stream details missing");
+          return;
+        }
         
         /* Setting aspect ratio to zero will cause XBMC to handle changes in it */
         stream.fAspect = 0.0f;

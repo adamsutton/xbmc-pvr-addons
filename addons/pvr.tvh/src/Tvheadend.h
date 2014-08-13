@@ -183,7 +183,6 @@ public:
   
   bool      SendMessage0    ( const char *method, htsmsg_t *m );
   htsmsg_t *SendAndWait0    ( const char *method, htsmsg_t *m, int iResponseTimeout = -1);
-  bool      SendMessage     ( const char *method, htsmsg_t *m );
   htsmsg_t *SendAndWait     ( const char *method, htsmsg_t *m, int iResponseTimeout = -1 );
 
   inline int  GetProtocol      ( void ) const { return m_htspVersion; }
@@ -247,8 +246,6 @@ public:
 private:
   PLATFORM::CMutex                        m_mutex;
   CHTSPConnection                        &m_conn;
-  bool                                    m_started;
-  PLATFORM::CCondition<volatile bool>     m_startCond;
   PLATFORM::SyncedBuffer<DemuxPacket*>    m_pktBuffer;
   ADDON::XbmcStreamProperties             m_streams;
   std::map<int,int>                       m_streamStat;
@@ -299,7 +296,6 @@ public:
   CHTSPVFS ( CHTSPConnection &conn );
   ~CHTSPVFS ();
 
-  bool ProcessMessage ( const char *method, htsmsg_t *m );
   void Connected    ( void );
 
 private:
@@ -308,8 +304,6 @@ private:
   uint32_t        m_fileId;
   CCircBuffer     m_buffer;
   int64_t         m_offset;
-
-  void      Flush  ( void );
 
   bool      Open   ( const PVR_RECORDING &rec );
   void      Close  ( void );
@@ -534,6 +528,7 @@ public:
   }
   inline void         VfsClose            ( void )
   {
+    PLATFORM::CLockObject lock(m_conn.Mutex());
     m_vfs.Close();
   }
   inline int          VfsRead             ( unsigned char *buf, unsigned int len )

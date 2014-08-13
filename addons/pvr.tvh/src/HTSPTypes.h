@@ -87,8 +87,6 @@ struct SChannel
 {
   bool             del;
   uint32_t         id;
-  uint32_t         now;
-  uint32_t         next;
   uint32_t         num;
   bool             radio;
   uint32_t         caid;
@@ -100,8 +98,6 @@ struct SChannel
   {
     del   = false;
     id    = 0;
-    now   = 0;
-    next  = 0;
     num   = 0;
     radio = false;
     caid  = 0;
@@ -171,7 +167,6 @@ struct SEvent
   uint32_t    episode;
   uint32_t    part;
   std::string title;
-  std::string subtitle;
   std::string desc;
   std::string summary;
   std::string image;
@@ -193,7 +188,6 @@ struct SEvent
     episode = 0;
     part    = 0;
     title.clear();
-    subtitle.clear();
     desc.clear();
     summary.clear();
     image.clear();
