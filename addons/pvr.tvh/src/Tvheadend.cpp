@@ -46,7 +46,8 @@ CTvheadend::CTvheadend()
 
 CTvheadend::~CTvheadend()
 {
-  StopThread(0);
+  m_conn.StopThread();
+  StopThread();
 }
 
 void CTvheadend::Start ( void )
