@@ -1,12 +1,12 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.tvh"
-  version="0.9.8"
+  version="0.9.9"
   name="Tvheadend Client"
   provider-name="Adam Sutton">
   <requires>
     <c-pluff version="0.1"/>
-    <import addon="xbmc.pvr" version="1.9.2"/>
+    <import addon="xbmc.pvr" version="1.9.3"/>
     <import addon="xbmc.codec" version="1.0.0"/>
   </requires>
   <extension

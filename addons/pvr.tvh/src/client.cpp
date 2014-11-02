@@ -331,6 +331,11 @@ const char *GetConnectionString(void)
   return tvh->GetServerString();
 }
 
+const char *GetBackendHostname(void)
+{
+  return g_strHostname.c_str();
+}
+
 PVR_ERROR GetDriveSpace(long long *iTotal, long long *iUsed)
 {
   return tvh->GetDriveSpace(iTotal, iUsed);
