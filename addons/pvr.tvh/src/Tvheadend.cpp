@@ -119,18 +119,27 @@ PVR_ERROR CTvheadend::GetTags ( ADDON_HANDLE handle )
   if (!m_asyncState.WaitForState(ASYNC_DVR))
     return PVR_ERROR_FAILED;
   
-  CLockObject lock(m_mutex);
-  STags::const_iterator it;
-  for (it = m_tags.begin(); it != m_tags.end(); ++it)
+  std::vector<PVR_CHANNEL_GROUP> tags;
   {
-    PVR_CHANNEL_GROUP tag;
-    memset(&tag, 0, sizeof(tag));
-    
-    tag.bIsRadio = false;
-    strncpy(tag.strGroupName, it->second.name.c_str(),
-            sizeof(tag.strGroupName));
+    CLockObject lock(m_mutex);
+    STags::const_iterator it;
+    for (it = m_tags.begin(); it != m_tags.end(); ++it)
+    {
+      PVR_CHANNEL_GROUP tag;
+      memset(&tag, 0, sizeof(tag));
 
-    PVR->TransferChannelGroup(handle, &tag);
+      tag.bIsRadio = false;
+      strncpy(tag.strGroupName, it->second.name.c_str(),
+              sizeof(tag.strGroupName));
+      tags.push_back(tag);
+    }
+  }
+
+  std::vector<PVR_CHANNEL_GROUP>::const_iterator it;
+  for (it = tags.begin(); it != tags.end(); ++it)
+  {
+    /* Callback. */
+    PVR->TransferChannelGroup(handle, &(*it));
   }
   
   return PVR_ERROR_NO_ERROR;
@@ -142,30 +151,41 @@ PVR_ERROR CTvheadend::GetTagMembers
   if (!m_asyncState.WaitForState(ASYNC_DVR))
     return PVR_ERROR_FAILED;
   
-  CLockObject lock(m_mutex);
-  vector<uint32_t>::const_iterator it;
-  SChannels::const_iterator cit;
-  STags::const_iterator     tit = m_tags.begin();
-  while (tit != m_tags.end())
+  std::vector<PVR_CHANNEL_GROUP_MEMBER> gms;
   {
-    if (tit->second.name == group.strGroupName)
+    CLockObject lock(m_mutex);
+    vector<uint32_t>::const_iterator it;
+    SChannels::const_iterator cit;
+    STags::const_iterator     tit = m_tags.begin();
+    while (tit != m_tags.end())
     {
-      for (it = tit->second.channels.begin();
-           it != tit->second.channels.end(); ++it)
+      if (tit->second.name == group.strGroupName)
       {
-        if ((cit = m_channels.find(*it)) != m_channels.end())
+        for (it = tit->second.channels.begin();
+             it != tit->second.channels.end(); ++it)
         {
-          PVR_CHANNEL_GROUP_MEMBER gm;
-          memset(&gm, 0, sizeof(PVR_CHANNEL_GROUP_MEMBER));
-          strncpy(gm.strGroupName, group.strGroupName, sizeof(gm.strGroupName) - 1);
-          gm.iChannelUniqueId = cit->second.id;
-          gm.iChannelNumber   = cit->second.num;
-          PVR->TransferChannelGroupMember(handle, &gm);
+          if ((cit = m_channels.find(*it)) != m_channels.end())
+          {
+            PVR_CHANNEL_GROUP_MEMBER gm;
+            memset(&gm, 0, sizeof(PVR_CHANNEL_GROUP_MEMBER));
+            strncpy(
+              gm.strGroupName, group.strGroupName, sizeof(gm.strGroupName) - 1);
+            gm.iChannelUniqueId = cit->second.id;
+            gm.iChannelNumber   = cit->second.num;
+            gms.push_back(gm);
+          }
         }
+        break;
       }
-      break;
+      ++tit;
     }
-    ++tit;
+  }
+
+  std::vector<PVR_CHANNEL_GROUP_MEMBER>::const_iterator it;
+  for (it = gms.begin(); it != gms.end(); ++it)
+  {
+    /* Callback. */
+    PVR->TransferChannelGroupMember(handle, &(*it));
   }
 
   return PVR_ERROR_NO_ERROR;
@@ -189,28 +209,37 @@ PVR_ERROR CTvheadend::GetChannels ( ADDON_HANDLE handle, bool radio )
   if (!m_asyncState.WaitForState(ASYNC_DVR))
     return PVR_ERROR_FAILED;
   
-  CLockObject lock(m_mutex);
-  SChannels::const_iterator it;
-  for (it = m_channels.begin(); it != m_channels.end(); ++it)
+  std::vector<PVR_CHANNEL> channels;
   {
-    if (radio != it->second.radio)
-      continue;
+    CLockObject lock(m_mutex);
+    SChannels::const_iterator it;
+    for (it = m_channels.begin(); it != m_channels.end(); ++it)
+    {
+      if (radio != it->second.radio)
+        continue;
 
-    PVR_CHANNEL chn;
-    memset(&chn, 0 , sizeof(PVR_CHANNEL));
+      PVR_CHANNEL chn;
+      memset(&chn, 0 , sizeof(PVR_CHANNEL));
 
-    chn.iUniqueId         = it->second.id;
-    chn.bIsRadio          = it->second.radio;
-    chn.iChannelNumber    = it->second.num;
-    chn.iSubChannelNumber = it->second.numMinor;
-    chn.iEncryptionSystem = it->second.caid;
-    chn.bIsHidden         = false;
-    strncpy(chn.strChannelName, it->second.name.c_str(),
-            sizeof(chn.strChannelName) - 1);
-    strncpy(chn.strIconPath, it->second.icon.c_str(),
-            sizeof(chn.strIconPath) - 1);
+      chn.iUniqueId         = it->second.id;
+      chn.bIsRadio          = it->second.radio;
+      chn.iChannelNumber    = it->second.num;
+      chn.iSubChannelNumber = it->second.numMinor;
+      chn.iEncryptionSystem = it->second.caid;
+      chn.bIsHidden         = false;
+      strncpy(chn.strChannelName, it->second.name.c_str(),
+              sizeof(chn.strChannelName) - 1);
+      strncpy(chn.strIconPath, it->second.icon.c_str(),
+              sizeof(chn.strIconPath) - 1);
+      channels.push_back(chn);
+    }
+  }
 
-    PVR->TransferChannelEntry(handle, &chn);
+  std::vector<PVR_CHANNEL>::const_iterator it;
+  for (it = channels.begin(); it != channels.end(); ++it)
+  {
+    /* Callback. */
+    PVR->TransferChannelEntry(handle, &(*it));
   }
 
   return PVR_ERROR_NO_ERROR;
@@ -301,69 +330,78 @@ PVR_ERROR CTvheadend::GetRecordings ( ADDON_HANDLE handle )
   if (!m_asyncState.WaitForState(ASYNC_EPG))
     return PVR_ERROR_NO_ERROR;
   
-  CLockObject lock(m_mutex);
-  SRecordings::const_iterator rit;
-  SChannels::const_iterator cit;
-  char buf[128];
-
-  for (rit = m_recordings.begin(); rit != m_recordings.end(); ++rit)
+  std::vector<PVR_RECORDING> recs;
   {
-    if (!rit->second.IsRecording()) continue;
+    CLockObject lock(m_mutex);
+    SRecordings::const_iterator rit;
+    SChannels::const_iterator cit;
+    char buf[128];
 
-    /* Setup entry */
-    PVR_RECORDING rec;
-    memset(&rec, 0, sizeof(rec));
-
-    /* Channel name and icon */
-    if ((cit = m_channels.find(rit->second.channel)) != m_channels.end())
+    for (rit = m_recordings.begin(); rit != m_recordings.end(); ++rit)
     {
-      strncpy(rec.strChannelName, cit->second.name.c_str(),
-              sizeof(rec.strChannelName));
-      
-      strncpy(rec.strIconPath, cit->second.icon.c_str(),
-              sizeof(rec.strIconPath));
-    }
+      if (!rit->second.IsRecording()) continue;
 
-    /* URL ( HTSP < v7 ) */
-    // TODO: do I care!
+      /* Setup entry */
+      PVR_RECORDING rec;
+      memset(&rec, 0, sizeof(rec));
 
-    /* ID */
-    snprintf(buf, sizeof(buf), "%i", rit->second.id);
-    strncpy(rec.strRecordingId, buf, sizeof(rec.strRecordingId));
-    
-    /* Title */
-    strncpy(rec.strTitle, rit->second.title.c_str(), sizeof(rec.strTitle));
-
-    /* Description */
-    strncpy(rec.strPlot, rit->second.description.c_str(), sizeof(rec.strPlot));
-  
-    /* Time/Duration */
-    rec.recordingTime = (time_t)rit->second.start;
-    rec.iDuration     = (time_t)(rit->second.stop - rit->second.start);
-
-    /* Priority */
-    rec.iPriority = rit->second.priority;
-
-    /* Retention */
-    rec.iLifetime = rit->second.retention;
-
-    /* Directory */
-    if (rit->second.path != "")
-    {
-      size_t idx = rit->second.path.rfind("/");
-      if (idx == 0 || idx == string::npos)
-        strncpy(rec.strDirectory, "/", sizeof(rec.strDirectory));
-      else
+      /* Channel name and icon */
+      if ((cit = m_channels.find(rit->second.channel)) != m_channels.end())
       {
-        CStdString d = rit->second.path.substr(0, idx);
-        if (d[0] != '/')
-          d = "/" + d;
-        strncpy(rec.strDirectory, d.c_str(), sizeof(rec.strDirectory));  
-      }
-    }
+        strncpy(rec.strChannelName, cit->second.name.c_str(),
+                sizeof(rec.strChannelName));
 
-    /* Transfer */
-    PVR->TransferRecordingEntry(handle, &rec);
+        strncpy(rec.strIconPath, cit->second.icon.c_str(),
+                sizeof(rec.strIconPath));
+      }
+
+      /* URL ( HTSP < v7 ) */
+      // TODO: do I care!
+
+      /* ID */
+      snprintf(buf, sizeof(buf), "%i", rit->second.id);
+      strncpy(rec.strRecordingId, buf, sizeof(rec.strRecordingId));
+
+      /* Title */
+      strncpy(rec.strTitle, rit->second.title.c_str(), sizeof(rec.strTitle));
+
+      /* Description */
+      strncpy(rec.strPlot, rit->second.description.c_str(), sizeof(rec.strPlot));
+
+      /* Time/Duration */
+      rec.recordingTime = (time_t)rit->second.start;
+      rec.iDuration     = (time_t)(rit->second.stop - rit->second.start);
+
+      /* Priority */
+      rec.iPriority = rit->second.priority;
+
+      /* Retention */
+      rec.iLifetime = rit->second.retention;
+
+      /* Directory */
+      if (rit->second.path != "")
+      {
+        size_t idx = rit->second.path.rfind("/");
+        if (idx == 0 || idx == string::npos)
+          strncpy(rec.strDirectory, "/", sizeof(rec.strDirectory));
+        else
+        {
+          CStdString d = rit->second.path.substr(0, idx);
+          if (d[0] != '/')
+            d = "/" + d;
+          strncpy(rec.strDirectory, d.c_str(), sizeof(rec.strDirectory));
+        }
+      }
+
+      recs.push_back(rec);
+    }
+  }
+
+  std::vector<PVR_RECORDING>::const_iterator it;
+  for (it = recs.begin(); it != recs.end(); ++it)
+  {
+    /* Callback. */
+    PVR->TransferRecordingEntry(handle, &(*it));
   }
 
   return PVR_ERROR_NO_ERROR;
@@ -492,38 +530,48 @@ PVR_ERROR CTvheadend::GetTimers ( ADDON_HANDLE handle )
   if (!m_asyncState.WaitForState(ASYNC_EPG))
     return PVR_ERROR_FAILED;
   
-  CLockObject lock(m_mutex);
-  SRecordings::const_iterator rit;
-
-  for (rit = m_recordings.begin(); rit != m_recordings.end(); ++rit)
+  std::vector<PVR_TIMER> timers;
   {
-    if (!rit->second.IsTimer()) continue;
+    CLockObject lock(m_mutex);
+    SRecordings::const_iterator rit;
 
-    /* Setup entry */
-    PVR_TIMER tmr;
-    memset(&tmr, 0, sizeof(tmr));
+    for (rit = m_recordings.begin(); rit != m_recordings.end(); ++rit)
+    {
+      if (!rit->second.IsTimer()) continue;
 
-    tmr.iClientIndex      = rit->second.id;
-    tmr.iClientChannelUid = rit->second.channel;
-    tmr.startTime         = (time_t)rit->second.start;
-    tmr.endTime           = (time_t)rit->second.stop;
-    strncpy(tmr.strTitle, rit->second.title.c_str(), 
-            sizeof(tmr.strTitle) - 1);
-    strncpy(tmr.strSummary, rit->second.description.c_str(),
-            sizeof(tmr.strSummary) - 1);
-    tmr.state             = rit->second.state;
-    tmr.iPriority         = rit->second.priority;
-    tmr.iLifetime         = rit->second.retention;
-    tmr.bIsRepeating      = false; // unused
-    tmr.firstDay          = 0;     // unused
-    tmr.iWeekdays         = 0;     // unused
-    tmr.iEpgUid           = 0;     // unused
-    tmr.iMarginStart      = rit->second.startExtra;
-    tmr.iMarginEnd        = rit->second.stopExtra;
-    tmr.iGenreType        = 0;     // unused
-    tmr.iGenreSubType     = 0;     // unused
+      /* Setup entry */
+      PVR_TIMER tmr;
+      memset(&tmr, 0, sizeof(tmr));
 
-    PVR->TransferTimerEntry(handle, &tmr);
+      tmr.iClientIndex      = rit->second.id;
+      tmr.iClientChannelUid = rit->second.channel;
+      tmr.startTime         = (time_t)rit->second.start;
+      tmr.endTime           = (time_t)rit->second.stop;
+      strncpy(tmr.strTitle, rit->second.title.c_str(), 
+              sizeof(tmr.strTitle) - 1);
+      strncpy(tmr.strSummary, rit->second.description.c_str(),
+              sizeof(tmr.strSummary) - 1);
+      tmr.state             = rit->second.state;
+      tmr.iPriority         = rit->second.priority;
+      tmr.iLifetime         = rit->second.retention;
+      tmr.bIsRepeating      = false; // unused
+      tmr.firstDay          = 0;     // unused
+      tmr.iWeekdays         = 0;     // unused
+      tmr.iEpgUid           = 0;     // unused
+      tmr.iMarginStart      = rit->second.startExtra;
+      tmr.iMarginEnd        = rit->second.stopExtra;
+      tmr.iGenreType        = 0;     // unused
+      tmr.iGenreSubType     = 0;     // unused
+
+      timers.push_back(tmr);
+    }
+  }
+
+  std::vector<PVR_TIMER>::const_iterator it;
+  for (it = timers.begin(); it != timers.end(); ++it)
+  {
+    /* Callback. */
+    PVR->TransferTimerEntry(handle, &(*it));
   }
 
   return PVR_ERROR_NO_ERROR;
@@ -671,6 +719,7 @@ void CTvheadend::TransferEvent
   const std::string recordingId = ss.str();
   epg.strRecordingId = recordingId.c_str();
   
+  /* Callback. */
   PVR->TransferEpgEntry(handle, &epg);
 }
 
@@ -691,18 +740,29 @@ PVR_ERROR CTvheadend::GetEpg
     if (!m_asyncState.WaitForState(ASYNC_DONE))
       return PVR_ERROR_FAILED;
     
-    CLockObject lock(m_mutex);
-    sit = m_schedules.find(chn.iUniqueId);
-    if (sit != m_schedules.end())
+    std::vector<SEvent> events;
     {
-      for (eit = sit->second.events.begin();
-          eit != sit->second.events.end(); ++eit)
+      CLockObject lock(m_mutex);
+      sit = m_schedules.find(chn.iUniqueId);
+      if (sit != m_schedules.end())
       {
-        if (eit->second.start    > end)   continue;
-        if (eit->second.stop     < start) continue;
-        TransferEvent(handle, eit->second);
-        ++n;
+        for (eit = sit->second.events.begin();
+            eit != sit->second.events.end(); ++eit)
+        {
+          if (eit->second.start    > end)   continue;
+          if (eit->second.stop     < start) continue;
+
+          events.push_back(eit->second);
+          ++n;
+        }
       }
+    }
+
+    std::vector<SEvent>::const_iterator it;
+    for (it = events.begin(); it != events.end(); ++it)
+    {
+      /* Callback. */
+      TransferEvent(handle, *it);
     }
 
   /* Synchronous transfer */
@@ -741,6 +801,7 @@ PVR_ERROR CTvheadend::GetEpg
       {
         if (ParseEvent(&f->hmf_msg, event))
         {
+          /* Callback. */
           TransferEvent(handle, event);
           ++n;
         }
