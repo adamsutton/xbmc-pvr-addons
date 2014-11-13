@@ -32,12 +32,6 @@ AC_ARG_ENABLE([addons-with-dependencies],
   [build_addons_with_dependencies=$enableval],
   [build_addons_with_dependencies=no])
 
-AC_ARG_ENABLE([mysql],
-  [AS_HELP_STRING([--disable-mysql],
-  [disable mysql])],
-  [use_mysql=$enableval],
-  [use_mysql=yes])
-
 BUILD_TYPE="debug"
 if test "$use_release" = "yes"; then
   BUILD_TYPE="release"
@@ -149,29 +143,6 @@ if test "$build_addons_with_dependencies" = "yes"; then
   echo "Building addons with dependencies"
 
   ### Libs that addons depend on
-  if test "$use_mysql" = "yes"; then
-    AC_PATH_PROG(MYSQL_CONFIG, mysql_config, "no")
-    if test "x$MYSQL_CONFIG" != "xno"; then
-      AC_DEFINE([HAVE_MYSQL],[1],["Define to 1 if you have the `mysql' library (-lmysqlclient)."])
-      MYSQL_INCLUDES=`$MYSQL_CONFIG --include`
-      MYSQL_LIBS=`$MYSQL_CONFIG --libs`
-      AC_SUBST(MYSQL_INCLUDES)
-      AC_SUBST(MYSQL_LIBS)
-    else
-      use_mysql=no
-    fi
-  fi
-  echo "MySQL: $use_mysql"
-
-  # Checks for boost headers
-  AC_LANG_PUSH([C++])
-  AC_CHECK_HEADER([boost/shared_ptr.hpp], use_boost=yes, use_boost=no,)
-  AC_LANG_POP([C++])
-  if test "$use_boost" = "yes"; then
-    AC_DEFINE([HAVE_BOOST],[1],["Define to 1 if we have the `boost' headers"])
-  fi
-  echo "Boost: $use_boost"
-
   AC_CHECK_LIB([z],[inflate], use_zlib=yes, use_zlib=no)
   if test "$use_zlib" = "yes"; then
     AC_DEFINE([HAVE_ZLIB],[1],["Define to 1 if we have the zlib library"])
@@ -209,9 +180,8 @@ if test "$build_addons_with_dependencies" = "yes"; then
 fi
 
 ### Addons with dependencies
-AM_CONDITIONAL([ADDON_MYTHTV], [test "$build_addons_with_dependencies" = "yes" -a "$use_mysql" = "yes" -a "$use_boost" = "yes"])
 AM_CONDITIONAL([ADDON_IPTVSIMPLE], [test "$build_addons_with_dependencies" = "yes" -a "$use_zlib" = "yes"])
-AM_CONDITIONAL([ADDON_FILMON], [test "$build_addons_with_dependencies" = "yes" -a "$use_curl" = "yes"])
+AM_CONDITIONAL([ADDON_FILMON], [test "$build_addons_with_dependencies" = "yes" -a "$use_curl" = "yes" -a "$use_jsoncpp" = "yes" -a "$use_cryptopp" = "yes"])
 
 ### Check for Intree building
 if test "x${cross_compiling}" = "xyes" || test "x${cross_compiling}" = "xmaybe"; then
@@ -293,18 +263,18 @@ fi
 if test "x${libdir}" != 'x${exec_prefix}/lib'; then
   LIBDIR=${libdir}
 elif test "$prefix" = "NONE"; then
-  LIBDIR=$PREFIX_DEFAULT/lib/xbmc/addons
+  LIBDIR=$PREFIX_DEFAULT/lib/kodi/addons
 else
-  LIBDIR=$prefix/lib/xbmc/addons
+  LIBDIR=$prefix/lib/kodi/addons
 fi
 AC_SUBST(LIBDIR)
 
 if test "x${datadir}" != 'x${datarootdir}' && test "x${datarootdir}" = 'x${prefix}/share'; then
   DATADIR=${datadir}
 elif test "$prefix" = "NONE"; then
-  DATADIR=$PREFIX_DEFAULT/share/xbmc/addons
+  DATADIR=$PREFIX_DEFAULT/share/kodi/addons
 else
-  DATADIR=$prefix/share/xbmc/addons 
+  DATADIR=$prefix/share/kodi/addons
 fi
 AC_SUBST(DATADIR)
 
@@ -313,9 +283,6 @@ AC_CONFIG_SUBDIRS([lib/cppmyth])
 ### Keep this in alphabetical order
 AC_CONFIG_FILES([Makefile \
                  lib/Makefile \
-                 lib/cmyth/Makefile \
-                 lib/cmyth/libcmyth/Makefile \
-                 lib/cmyth/librefmem/Makefile \
                  lib/jsoncpp/Makefile \
                  lib/libdvblinkremote/Makefile \
                  lib/libhts/Makefile \
@@ -331,7 +298,6 @@ AC_CONFIG_FILES([Makefile \
                  addons/pvr.iptvsimple/Makefile \
                  addons/pvr.mediaportal.tvserver/Makefile \
                  addons/pvr.mythtv/Makefile \
-                 addons/pvr.mythtv.cmyth/Makefile \
                  addons/pvr.nextpvr/Makefile \
                  addons/pvr.njoy/Makefile \
                  addons/pvr.tvh/Makefile \
@@ -347,7 +313,6 @@ AC_CONFIG_FILES([Makefile \
                  addons/pvr.iptvsimple/addon/addon.xml
                  addons/pvr.mediaportal.tvserver/addon/addon.xml
                  addons/pvr.mythtv/addon/addon.xml
-                 addons/pvr.mythtv.cmyth/addon/addon.xml
                  addons/pvr.nextpvr/addon/addon.xml
                  addons/pvr.njoy/addon/addon.xml
                  addons/pvr.tvh/addon/addon.xml

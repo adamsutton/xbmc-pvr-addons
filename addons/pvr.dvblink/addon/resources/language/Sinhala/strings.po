@@ -1,4 +1,4 @@
-# XBMC Media Center language file
+# Kodi Media Center language file
 # Addon Name: DVBLink PVR Client
 # Addon id: pvr.dvblink
 # Addon Provider: DVBLogic
@@ -8,7 +8,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: http://trac.xbmc.org/\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: XBMC Translation Team\n"
+"Last-Translator: Kodi Translation Team\n"
 "Language-Team: Sinhala (http://www.transifex.com/projects/p/xbmc-main/language/si/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -47,10 +47,6 @@ msgstr "මුරපදය"
 msgctxt "#30100"
 msgid "Stream"
 msgstr "ප්‍රවාහය"
-
-msgctxt "#30102"
-msgid "Stream format"
-msgstr "ප්‍රවාහ ආකෘතිය"
 
 msgctxt "#30103"
 msgid "Height"

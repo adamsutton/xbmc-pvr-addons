@@ -224,6 +224,7 @@ PVR_ERROR CHTSPData::GetChannels(ADDON_HANDLE handle, bool bRadio)
     tag.iUniqueId         = channel.id;
     tag.bIsRadio          = channel.radio;
     tag.iChannelNumber    = channel.num;
+    tag.iSubChannelNumber = channel.numMinor;
     strncpy(tag.strChannelName, channel.name.c_str(), sizeof(tag.strChannelName) - 1);
     tag.iEncryptionSystem = channel.caid;
     strncpy(tag.strIconPath, channel.icon.c_str(), sizeof(tag.strIconPath) - 1);
@@ -348,6 +349,8 @@ PVR_ERROR CHTSPData::GetRecordings(ADDON_HANDLE handle)
     strncpy(tag.strIconPath, strIconPath.c_str(), sizeof(tag.strIconPath) - 1);
     tag.recordingTime  = recording.start;
     tag.iDuration      = recording.stop - recording.start;
+    tag.iPriority      = recording.priority;
+    tag.iLifetime      = recording.retention;
 
     PVR->TransferRecordingEntry(handle, &tag);
   }
@@ -465,14 +468,14 @@ PVR_ERROR CHTSPData::GetTimers(ADDON_HANDLE handle)
     strncpy(tag.strTitle, recording.title.c_str(), sizeof(tag.strTitle) - 1);
     strncpy(tag.strSummary, recording.description.c_str(), sizeof(tag.strSummary) - 1);
     tag.state             = (PVR_TIMER_STATE) recording.state;
-    tag.iPriority         = 0;     // unused
-    tag.iLifetime         = 0;     // unused
+    tag.iPriority         = recording.priority;
+    tag.iLifetime         = recording.retention;
     tag.bIsRepeating      = false; // unused
     tag.firstDay          = 0;     // unused
     tag.iWeekdays         = 0;     // unused
     tag.iEpgUid           = 0;     // unused
-    tag.iMarginStart      = 0;     // unused
-    tag.iMarginEnd        = 0;     // unused
+    tag.iMarginStart      = recording.startExtra;
+    tag.iMarginEnd        = recording.stopExtra;
     tag.iGenreType        = 0;     // unused
     tag.iGenreSubType     = 0;     // unused
 
@@ -543,8 +546,6 @@ PVR_ERROR CHTSPData::AddTimer(const PVR_TIMER &timer)
   if ((GetProtocol() >= 6) && timer.iEpgUid > 0)
   {
     htsmsg_add_u32(msg, "eventId",     timer.iEpgUid);
-    htsmsg_add_s64(msg, "startExtra",  timer.iMarginStart);
-    htsmsg_add_s64(msg, "stopExtra",   timer.iMarginEnd);
   }
   else
   {
@@ -555,6 +556,13 @@ PVR_ERROR CHTSPData::AddTimer(const PVR_TIMER &timer)
     htsmsg_add_str(msg, "description", timer.strSummary);
     htsmsg_add_u32(msg, "eventId",     -1);
   }
+
+  htsmsg_add_s64(msg, "startExtra",  timer.iMarginStart);
+  htsmsg_add_s64(msg, "stopExtra",   timer.iMarginEnd);
+
+  if (GetProtocol() > 12)
+    htsmsg_add_u32(msg, "retention", timer.iLifetime);
+
   htsmsg_add_u32(msg, "priority",    prio);
   htsmsg_add_str(msg, "creator",     "XBMC");
 
@@ -588,11 +596,33 @@ PVR_ERROR CHTSPData::UpdateTimer(const PVR_TIMER &timer)
   XBMC->Log(LOG_DEBUG, "%s - channelUid=%d title=%s epgid=%d", __FUNCTION__, timer.iClientChannelUid, timer.strTitle, timer.iEpgUid);
 
   htsmsg_t *msg = htsmsg_create_map();
-  htsmsg_add_str(msg, "method", "updateDvrEntry");
-  htsmsg_add_u32(msg, "id",     timer.iClientIndex);
-  htsmsg_add_str(msg, "title",  timer.strTitle);
-  htsmsg_add_u32(msg, "start",  timer.startTime);
-  htsmsg_add_u32(msg, "stop",   timer.endTime);
+  htsmsg_add_str(msg, "method",     "updateDvrEntry");
+  htsmsg_add_u32(msg, "id",         timer.iClientIndex);
+  htsmsg_add_str(msg, "title",      timer.strTitle);
+  htsmsg_add_u32(msg, "start",      timer.startTime);
+  htsmsg_add_u32(msg, "stop",       timer.endTime);
+  htsmsg_add_s64(msg, "startExtra", timer.iMarginStart);
+  htsmsg_add_s64(msg, "stopExtra",  timer.iMarginEnd);
+
+  if (GetProtocol() > 12)
+  {
+    htsmsg_add_u32(msg, "retention", timer.iLifetime);
+
+    /* Priority */
+    dvr_prio_t prio = DVR_PRIO_UNIMPORTANT;
+    if (timer.iPriority <= 20)
+      prio = DVR_PRIO_UNIMPORTANT;
+    else if (timer.iPriority <= 40)
+      prio =  DVR_PRIO_LOW;
+    else if (timer.iPriority <= 60)
+      prio =  DVR_PRIO_NORMAL;
+    else if (timer.iPriority <= 80)
+      prio =  DVR_PRIO_HIGH;
+    else
+      prio = DVR_PRIO_IMPORTANT;
+
+    htsmsg_add_u32(msg, "priority", (int)prio);
+  }
 
   CHTSResult result;
   ReadResult(msg, result);
@@ -636,7 +666,7 @@ PVR_ERROR CHTSPData::RenameRecording(const PVR_RECORDING &recording, const char 
     return PVR_ERROR_SERVER_ERROR;
   }
 
-  if (success > 0)
+  if (success > 0 && m_bIsStarted)
     PVR->TriggerRecordingUpdate();
 
   return success > 0 ? PVR_ERROR_NO_ERROR : PVR_ERROR_FAILED;
@@ -824,13 +854,14 @@ void CHTSPData::ParseChannelRemove(htsmsg_t* msg)
 
   m_channels.erase(id);
 
-  PVR->TriggerChannelUpdate();
+  if (m_bIsStarted)
+    PVR->TriggerChannelUpdate();
 }
 
 void CHTSPData::ParseChannelUpdate(htsmsg_t* msg)
 {
   bool bChannelChanged(false), bTagsChanged(false);
-  uint32_t iChannelId, iEventId = 0, iChannelNumber = 0, iCaid = 0;
+  uint32_t iChannelId, iEventId = 0, iChannelNumber = 0, iSubChannelNumber = 0, iCaid = 0;
   const char *strName, *strIconPath;
   if(htsmsg_get_u32(msg, "channelId", &iChannelId))
   {
@@ -877,6 +908,16 @@ void CHTSPData::ParseChannelUpdate(htsmsg_t* msg)
     {
       bChannelChanged = true;
       channel.num = iNewChannelNumber;
+    }
+  }
+
+  /* ATSC subchannel number */
+  if (!htsmsg_get_u32(msg, "channelNumberMinor", &iSubChannelNumber))
+  {
+    if (channel.numMinor != iSubChannelNumber)
+    {
+      bChannelChanged = true;
+      channel.numMinor = iSubChannelNumber;
     }
   }
 
@@ -943,10 +984,13 @@ void CHTSPData::ParseChannelUpdate(htsmsg_t* msg)
       __FUNCTION__, iChannelId, strName ? strName : "(null)", strIconPath ? strIconPath : "(null)", iEventId);
 #endif
 
-  if (bChannelChanged)
-    PVR->TriggerChannelUpdate();
-  if (bTagsChanged)
-    PVR->TriggerChannelGroupsUpdate();
+  if (m_bIsStarted)
+  {
+    if (bChannelChanged)
+      PVR->TriggerChannelUpdate();
+    if (bTagsChanged)
+      PVR->TriggerChannelGroupsUpdate();
+  }
 }
 
 void CHTSPData::ParseDVREntryDelete(htsmsg_t* msg)
@@ -964,15 +1008,21 @@ void CHTSPData::ParseDVREntryDelete(htsmsg_t* msg)
 
   m_recordings.erase(id);
 
-  PVR->TriggerTimerUpdate();
-  PVR->TriggerRecordingUpdate();
+  if (m_bIsStarted)
+  {
+    PVR->TriggerTimerUpdate();
+    PVR->TriggerRecordingUpdate();
+  }
 }
 
 void CHTSPData::ParseDVREntryUpdate(htsmsg_t* msg)
 {
   SRecording recording;
   const char *state;
+  int64_t    startExtra, stopExtra;
+  uint32_t   retention, priority;
 
+  /* Required fields */
   if(htsmsg_get_u32(msg, "id",      &recording.id)
   || htsmsg_get_u32(msg, "channel", &recording.channel)
   || htsmsg_get_u32(msg, "start",   &recording.start)
@@ -993,6 +1043,42 @@ void CHTSPData::ParseDVREntryUpdate(htsmsg_t* msg)
     recording.state = ST_COMPLETED;
   else if(strstr(state, "invalid"))
     recording.state = ST_INVALID;
+
+  /* Optional fields */
+  if(!htsmsg_get_s64(msg, "startExtra", &startExtra))
+    recording.startExtra = startExtra;
+
+  if(!htsmsg_get_s64(msg, "stopExtra",  &stopExtra))
+    recording.stopExtra = stopExtra;
+
+  if(!htsmsg_get_u32(msg, "retention",  &retention))
+    recording.retention = retention;
+
+  if(!htsmsg_get_u32(msg, "priority",   &priority))
+  {
+    switch (priority)
+    {
+      case DVR_PRIO_IMPORTANT:
+        recording.priority = 100;
+        break;
+      case DVR_PRIO_HIGH:
+        recording.priority = 75;
+        break;
+      case DVR_PRIO_NORMAL:
+        recording.priority = 50;
+        break;
+      case DVR_PRIO_LOW:
+        recording.priority = 25;
+        break;
+      case DVR_PRIO_UNIMPORTANT:
+        recording.priority = 0;
+        break;
+      default:
+        XBMC->Log(LOG_ERROR, "%s - malformed message received", __FUNCTION__);
+        htsmsg_print(msg);
+        return;
+    }
+  }
 
   const char* str;
   if((str = htsmsg_get_str(msg, "title")) == NULL)
@@ -1038,10 +1124,13 @@ void CHTSPData::ParseDVREntryUpdate(htsmsg_t* msg)
 
   m_recordings[recording.id] = recording;
 
-  PVR->TriggerTimerUpdate();
+  if (m_bIsStarted)
+  {
+    PVR->TriggerTimerUpdate();
 
-  if (recording.state == ST_RECORDING)
-   PVR->TriggerRecordingUpdate();
+    if (recording.state == ST_RECORDING)
+      PVR->TriggerRecordingUpdate();
+  }
 }
 
 bool CHTSPData::ParseEvent(ADDON_HANDLE handle, htsmsg_t* msg, uint32_t *id, time_t end)
@@ -1141,7 +1230,8 @@ void CHTSPData::ParseTagRemove(htsmsg_t* msg)
 
   m_tags.erase(id);
 
-  PVR->TriggerChannelGroupsUpdate();
+  if (m_bIsStarted)
+    PVR->TriggerChannelGroupsUpdate();
 }
 
 void CHTSPData::ParseTagUpdate(htsmsg_t* msg)
@@ -1183,7 +1273,8 @@ void CHTSPData::ParseTagUpdate(htsmsg_t* msg)
       , __FUNCTION__, id, name ? name : "(null)", icon ? icon : "(null)");
 #endif
 
-  PVR->TriggerChannelGroupsUpdate();
+  if (m_bIsStarted)
+    PVR->TriggerChannelGroupsUpdate();
 }
 
 bool CHTSPData::OpenRecordedStream(const PVR_RECORDING &recording)
@@ -1351,6 +1442,12 @@ bool CHTSPData::OnConnectionDropped(void)
 
 bool CHTSPData::OnConnectionRestored(void)
 {
+  // Clear cached data. They may be invalid due to changes on tvh side
+  // while connection was down (e.g. deleted timers).
+  m_channels.clear();
+  m_tags.clear();
+  m_recordings.clear();
+
   if(!SendEnableAsync())
     return false;
 
@@ -1359,6 +1456,11 @@ bool CHTSPData::OnConnectionRestored(void)
     if (!m_started.Wait(m_mutex, m_bIsStarted, g_iConnectTimeout * 1000))
       return false;
   }
+
+  PVR->TriggerChannelUpdate();
+  PVR->TriggerChannelGroupsUpdate();
+  PVR->TriggerRecordingUpdate();
+  PVR->TriggerTimerUpdate();
 
   if (m_demux)
     m_demux->OnConnectionRestored();
@@ -1488,7 +1590,7 @@ PVR_ERROR CHTSPData::GetEdl(const PVR_RECORDING &recording, PVR_EDL_ENTRY entrie
           htsmsg_get_u32(edl, "end", &end) != 0 ||
           htsmsg_get_u32(edl, "type", &type) != 0) 
       {
-	continue;
+        continue;
       }
       
       PVR_EDL_ENTRY entry;
@@ -1528,4 +1630,11 @@ PVR_ERROR CHTSPData::GetEdl(const PVR_RECORDING &recording, PVR_EDL_ENTRY entrie
   *size = index;
   
   return PVR_ERROR_NO_ERROR;
+}
+
+double CHTSPData::DemuxGetTimeshiftTime(void)
+{
+  return m_demux ?
+      m_demux->GetTimeshiftTime() :
+      0;
 }

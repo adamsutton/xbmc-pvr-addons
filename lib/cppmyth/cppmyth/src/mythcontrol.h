@@ -33,15 +33,18 @@ namespace Myth
   {
   public:
     Control(const std::string& server, unsigned protoPort, unsigned wsapiPort);
+    Control(const std::string& server, unsigned protoPort, unsigned wsapiPort, bool blockShutdown);
     ~Control();
 
     bool Open();
     void Close();
     bool IsOpen() { return m_monitor.IsOpen(); }
+    bool HasHanging() const { return m_monitor.HasHanging(); }
+    void CleanHanging() { m_monitor.CleanHanging(); }
 
     /**
      * @brief Check availability of API services
-     * @return If unavailable then 0 else the backend version Id
+     * @return If unavailable then 0 else the backend protocol number
      */
     unsigned CheckService()
     {
@@ -215,16 +218,16 @@ namespace Myth
      */
     bool DeleteRecording(const Program& program, bool forceDelete = false, bool allowRerecord = false)
     {
-      unsigned proto = m_wsapi.CheckService();
-      if (proto >= 82)
+      WSServiceVersion_t wsv = m_wsapi.CheckService(WS_Dvr);
+      if (wsv.ranking >= 0x00020001)
         return m_wsapi.DeleteRecording(program.channel.chanId, program.recording.startTs, forceDelete, allowRerecord);
       return m_monitor.DeleteRecording(program, forceDelete, allowRerecord);
     }
 
     bool UndeleteRecording(const Program& program)
     {
-      unsigned proto = m_wsapi.CheckService();
-      if (proto >= 82)
+      WSServiceVersion_t wsv = m_wsapi.CheckService(WS_Dvr);
+      if (wsv.ranking >= 0x00020001)
         return m_wsapi.UnDeleteRecording(program.channel.chanId, program.recording.startTs);
       return m_monitor.UndeleteRecording(program);
     }
@@ -457,6 +460,24 @@ namespace Myth
     MarkListPtr GetCommBreakList(const Program& program, int unit = 0)
     {
       return m_monitor.GetCommBreakList(program, unit);
+    }
+
+    /**
+     * @brief Prevents backend from shutting down until a the next call to AllowShutdown().
+     * @return bool
+     */
+    bool BlockShutdown()
+    {
+      return m_monitor.BlockShutdown();
+    }
+
+    /**
+     * @brief Allows backend to shut down again after a previous call to BlockShutdown().
+     * @return bool
+     */
+    bool AllowShutdown()
+    {
+      return m_monitor.AllowShutdown();
     }
 
   private:

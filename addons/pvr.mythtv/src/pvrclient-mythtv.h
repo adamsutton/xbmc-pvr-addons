@@ -54,6 +54,8 @@ public:
   PVR_ERROR GetDriveSpace(long long *iTotal, long long *iUsed);
   void OnSleep();
   void OnWake();
+  void OnDeactivatedGUI();
+  void OnActivatedGUI();
 
   // Implements EventSubscriber
   void HandleBackendMessage(const Myth::EventMessage& msg);
@@ -125,6 +127,8 @@ public:
   // Backend settings
   bool GetLiveTVPriority();
   void SetLiveTVPriority(bool enabled);
+  void BlockBackendShutdown();
+  void AllowBackendShutdown();
 
 private:
   Myth::EventHandler *m_eventHandler;
@@ -133,6 +137,7 @@ private:
   Myth::RecordingPlayback *m_recordingStream;
   unsigned m_eventSubscriberId;
   bool m_hang;
+  bool m_powerSaving;
 
   // Backend
   FileOps *m_fileOps;
@@ -176,12 +181,18 @@ private:
    * Make formatted title based on original title and subtitle of program.
    * \see class MythProgramInfo , class MythEPGInfo
    */
-  std::string MakeProgramTitle(const std::string& title, const std::string& subtitle) const;
+  static std::string MakeProgramTitle(const std::string& title, const std::string& subtitle);
 
   /**
    *
    * \brief Handle broadcast UID for MythTV program
    */
-  int MakeBroadcastID(unsigned int chanid, time_t starttime) const;
-  void BreakBroadcastID(int broadcastid, unsigned int *chanid, time_t *starttime) const;
+  static int MakeBroadcastID(unsigned int chanid, time_t starttime);
+  static void BreakBroadcastID(int broadcastid, unsigned int *chanid, time_t *starttime);
+
+  /**
+   *
+   * \brief Parse and fill AV stream infos for a recorded program
+   */
+  static void FillRecordingAVInfo(MythProgramInfo& programInfo, Myth::Stream *stream);
 };

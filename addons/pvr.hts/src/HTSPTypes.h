@@ -62,6 +62,7 @@ struct SChannel
   std::string      icon;
   int              event;
   int              num;
+  int              numMinor;
   bool             radio;
   int              caid;
   std::vector<int> tags;
@@ -72,6 +73,7 @@ struct SChannel
     id    = 0;
     event = 0;
     num   = 0;
+    numMinor = 0;
     radio = false;
     caid  = 0;
     name.clear();
@@ -126,20 +128,26 @@ struct SRecording
   uint32_t         channel;
   uint32_t         start;
   uint32_t         stop;
+  int64_t          startExtra;
+  int64_t          stopExtra;
   std::string      title;
   std::string      path;
   std::string      description;
   ERecordingState  state;
   std::string      error;
+  uint32_t         retention;
+  uint32_t         priority;
 
   SRecording() { Clear(); }
   void Clear()
   {
-    id = channel = start = stop = 0;
+    id = channel = start = stop = startExtra = stopExtra = 0;
     title.clear();
     description.clear();
     state = ST_INVALID;
     error.clear();
+    retention = 99; // xbmc default - 99 days
+    priority  = 50; // xbmc default - "normal"
   }
 };
 
@@ -161,6 +169,23 @@ struct SQueueStatus
     bdrops  = 0;
     pdrops  = 0;
     idrops  = 0;
+  }
+};
+
+struct STimeshiftStatus
+{
+  bool    full;
+  int64_t shift;
+  int64_t start;
+  int64_t end;
+
+  STimeshiftStatus() { Clear(); }
+  void Clear()
+  {
+    full  = 0;
+    shift = 0;
+    start = 0;
+    end   = 0;
   }
 };
 

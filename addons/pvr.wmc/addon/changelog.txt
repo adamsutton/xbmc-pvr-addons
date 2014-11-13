@@ -1,3 +1,16 @@
+0.3.106
+- fixed deadlock when activating the addon on some darwin (osx, ios) runtimes
+
+0.3.105
+- Updated Language files from Transifex
+
+0.3.104
+- Updated Language files from Transifex
+
+0.3.103
+- rename addon in addon.xml file
+- add support for TriggerEPGUpdate
+
 0.3.102
 - populate new subchannel field
 
