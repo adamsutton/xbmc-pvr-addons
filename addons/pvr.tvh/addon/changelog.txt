@@ -1,3 +1,6 @@
+0.9.7
+ - fix potential deadlocks due to overzealous locking (@ksooo)
+
 0.9.6
  - merge with upstream, contains a fix to the threading library which makes the addon work on Mac OS X
 
