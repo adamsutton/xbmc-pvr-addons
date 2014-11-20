@@ -30,6 +30,7 @@
 #include "xbmc_stream_utils.hpp"
 #include "libXBMC_addon.h"
 #include "CircBuffer.h"
+#include "Settings.h"
 #include "HTSPTypes.h"
 #include "AsyncState.h"
 #include <map>
@@ -66,7 +67,7 @@ extern "C" {
 #define tvhdebug(...) tvhlog(LOG_DEBUG, ##__VA_ARGS__)
 #define tvhinfo(...)  tvhlog(LOG_INFO,  ##__VA_ARGS__)
 #define tvherror(...) tvhlog(LOG_ERROR, ##__VA_ARGS__)
-#define tvhtrace(...) if (g_bTraceDebug) tvhlog(LOG_DEBUG, ##__VA_ARGS__)
+#define tvhtrace(...) if (tvh->GetSettings().bTraceDebug) tvhlog(LOG_DEBUG, ##__VA_ARGS__)
 static inline void tvhlog ( ADDON::addon_log_t lvl, const char *fmt, ... )
 {
   char buf[16384];
@@ -317,7 +318,7 @@ class CTvheadend
   : public PLATFORM::CThread
 {
 public:
-  CTvheadend();
+  CTvheadend(tvheadend::Settings settings);
   ~CTvheadend();
 
   void Start ( void );
@@ -325,6 +326,10 @@ public:
   void Disconnected   ( void );
   bool Connected      ( void );
   bool ProcessMessage ( const char *method, htsmsg_t *msg );
+
+  inline const tvheadend::Settings& GetSettings() {
+    return m_settings;
+  };
 
   PVR_ERROR GetDriveSpace     ( long long *total, long long *used );
 
@@ -355,6 +360,7 @@ private:
   uint32_t GetNextUnnumberedChannelNumber();
   
   PLATFORM::CMutex            m_mutex;
+  const tvheadend::Settings   m_settings;
   
   CHTSPConnection             m_conn;
   CHTSPDemuxer                m_dmx;

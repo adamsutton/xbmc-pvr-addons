@@ -24,6 +24,7 @@
 #include "platform/threads/mutex.h"
 #include "platform/util/atomic.h"
 #include "platform/util/util.h"
+#include "Settings.h"
 #include "Tvheadend.h"
 
 using namespace std;
@@ -129,7 +130,19 @@ ADDON_STATUS ADDON_Create(void* hdl, void* _unused(props))
 
   ADDON_ReadSettings();
   
-  tvh = new CTvheadend;
+  /* Create a settings object that can be used without locks */
+  tvheadend::Settings settings;
+  settings.strHostname = g_strHostname;
+  settings.iPortHTSP = g_iPortHTSP;
+  settings.iPortHTTP = g_iPortHTTP;
+  settings.strUsername = g_strUsername;
+  settings.strPassword = g_strPassword;
+  settings.iConnectTimeout = g_iConnectTimeout;
+  settings.iResponseTimeout = g_iResponseTimeout;
+  settings.bTraceDebug = g_bTraceDebug;
+  settings.bAsyncEpg = g_bAsyncEpg;
+
+  tvh = new CTvheadend(settings);
   tvh->Start();
 
   /* Wait for connection */
