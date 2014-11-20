@@ -38,16 +38,5 @@ extern CHelper_libXBMC_codec*         CODEC;
 #define DEFAULT_CONNECT_TIMEOUT  10
 #define DEFAULT_RESPONSE_TIMEOUT 5
 
-extern PLATFORM::CMutex          g_mutex;
-extern std::string               g_strHostname;
-extern int                       g_iPortHTSP;
-extern int                       g_iPortHTTP;
-extern std::string               g_strUsername;
-extern std::string               g_strPassword;
-extern int                       g_iConnectTimeout;
-extern int                       g_iResponseTimeout;
-extern bool                      g_bTraceDebug;
-extern bool                      g_bAsyncEpg;
-
 class CTvheadend;
 extern CTvheadend                *tvh;
