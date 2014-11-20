@@ -95,6 +95,7 @@
     <ClCompile Include="..\..\src\Tvheadend.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\AsyncState.h" />
     <ClInclude Include="..\..\src\CircBuffer.h" />
     <ClInclude Include="..\..\src\client.h" />
     <ClInclude Include="..\..\src\HTSPTypes.h" />
