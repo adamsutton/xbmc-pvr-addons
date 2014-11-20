@@ -183,46 +183,44 @@ unsigned int ADDON_GetSettings
 ADDON_STATUS ADDON_SetSetting
   (const char *settingName, const void *settingValue)
 {
-#define UPDATE_STR(key, var, act)\
+#define UPDATE_STR(key, var)\
   if (!strcmp(settingName, key))\
   {\
     if (!strcmp(var.c_str(), (const char*)settingValue))\
     {\
       tvhdebug("update %s from '%s' to '%s'",\
                settingName, var.c_str(), settingValue);\
-      return act;\
+      return ADDON_STATUS_NEED_RESTART;\
     }\
     return ADDON_STATUS_OK;\
   }
 
-#define UPDATE_INT(key, type, var, act)\
+#define UPDATE_INT(key, type, var)\
   if (!strcmp(settingName, key))\
   {\
     if (var != *(type*)settingValue)\
     {\
       tvhdebug("update %s from '%d' to '%d'",\
                settingName, var, (int)*(type*)settingValue);\
-      return act;\
+      return ADDON_STATUS_NEED_RESTART;\
     }\
     return ADDON_STATUS_OK;\
   }
 
   /* Connection */
-  UPDATE_STR("host", g_strHostname, ADDON_STATUS_NEED_RESTART);
-  UPDATE_STR("user", g_strUsername, ADDON_STATUS_NEED_RESTART);
-  UPDATE_STR("pass", g_strPassword, ADDON_STATUS_NEED_RESTART);
-  UPDATE_INT("htsp_port", int, g_iPortHTSP, ADDON_STATUS_NEED_RESTART);
-  UPDATE_INT("http_port", int, g_iPortHTTP, ADDON_STATUS_NEED_RESTART);
-  UPDATE_INT("connect_timeout",  int, g_iConnectTimeout, ADDON_STATUS_OK);
-  UPDATE_INT("response_timeout", int, g_iResponseTimeout, ADDON_STATUS_OK);
+  UPDATE_STR("host", g_strHostname);
+  UPDATE_STR("user", g_strUsername);
+  UPDATE_STR("pass", g_strPassword);
+  UPDATE_INT("htsp_port", int, g_iPortHTSP);
+  UPDATE_INT("http_port", int, g_iPortHTTP);
+  UPDATE_INT("connect_timeout", int, g_iConnectTimeout);
+  UPDATE_INT("response_timeout", int, g_iResponseTimeout);
   
   /* Data transfer */
-  UPDATE_INT("epg_async", bool, g_bAsyncEpg, ADDON_STATUS_NEED_RESTART);
+  UPDATE_INT("epg_async", bool, g_bAsyncEpg);
 
   /* Debug */
-  UPDATE_INT("trace_debug", bool, g_bTraceDebug, ADDON_STATUS_OK);
-
-  /* TODO: Transcoding */
+  UPDATE_INT("trace_debug", bool, g_bTraceDebug);
 
   return ADDON_STATUS_OK;
 
