@@ -38,7 +38,7 @@ List of addons with dependencies:
 Building the pvr addons standalone:
 -----------------------------------
 Prepare:
-1) Install Visual C++ Express 2013 (follow the instructions on the wiki for XBMC itself)
+1) Install Visual Studio Express 2013 (follow the instructions on the wiki for XBMC itself)
 Compile:
 2) Run project\BuildDependencies\DownloadBuildDeps.bat
 3) Open this solution from project\VS2013Express\xbmc-pvr-addons.sln
