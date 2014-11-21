@@ -1351,6 +1351,10 @@ void CTvheadend::ParseRecordingUpdate ( htsmsg_t *msg )
   {
     UPDATE(rec.state, PVR_TIMER_STATE_COMPLETED);
   }
+  else if (strstr(state, "missed") != NULL)
+  {
+    UPDATE(rec.state, PVR_TIMER_STATE_ERROR);
+  }
   else if (strstr(state, "invalid")   != NULL)
   {
     UPDATE(rec.state, PVR_TIMER_STATE_ERROR);
