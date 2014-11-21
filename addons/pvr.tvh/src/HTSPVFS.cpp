@@ -39,7 +39,7 @@ using namespace PLATFORM;
 CHTSPVFS::CHTSPVFS ( CHTSPConnection &conn )
   : m_conn(conn), m_path(""), m_fileId(0), m_offset(0)
 {
-  m_buffer.alloc(1000000);
+  m_buffer.alloc(MAX_BUFFER_SIZE);
 }
 
 CHTSPVFS::~CHTSPVFS ( void )
