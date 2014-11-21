@@ -64,10 +64,10 @@ extern "C" {
 /*
  * Log wrappers
  */
-#define tvhdebug(...) tvhlog(LOG_DEBUG, ##__VA_ARGS__)
-#define tvhinfo(...)  tvhlog(LOG_INFO,  ##__VA_ARGS__)
-#define tvherror(...) tvhlog(LOG_ERROR, ##__VA_ARGS__)
-#define tvhtrace(...) if (tvh->GetSettings().bTraceDebug) tvhlog(LOG_DEBUG, ##__VA_ARGS__)
+#define tvhdebug(...) tvhlog(ADDON::LOG_DEBUG, ##__VA_ARGS__)
+#define tvhinfo(...)  tvhlog(ADDON::LOG_INFO,  ##__VA_ARGS__)
+#define tvherror(...) tvhlog(ADDON::LOG_ERROR, ##__VA_ARGS__)
+#define tvhtrace(...) if (tvh->GetSettings().bTraceDebug) tvhlog(ADDON::LOG_DEBUG, ##__VA_ARGS__)
 static inline void tvhlog ( ADDON::addon_log_t lvl, const char *fmt, ... )
 {
   char buf[16384];
