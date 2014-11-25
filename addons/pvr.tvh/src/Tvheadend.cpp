@@ -69,10 +69,7 @@ PVR_ERROR CTvheadend::GetDriveSpace ( long long *total, long long *used )
   htsmsg_t *m = htsmsg_create_map();
   m = m_conn.SendAndWait("getDiskSpace", m);
   if (m == NULL)
-  {
-    tvherror("failed to get disk space");
     return PVR_ERROR_SERVER_ERROR;
-  }
 
   if (htsmsg_get_s64(m, "totaldiskspace", &s64))
     goto error;
@@ -251,7 +248,6 @@ PVR_ERROR CTvheadend::GetChannels ( ADDON_HANDLE handle, bool radio )
 
 PVR_ERROR CTvheadend::SendDvrDelete ( uint32_t id, const char *method )
 {
-  const char *str;
   uint32_t u32;
 
   CLockObject lock(m_conn.Mutex());
@@ -262,17 +258,10 @@ PVR_ERROR CTvheadend::SendDvrDelete ( uint32_t id, const char *method )
 
   /* Send and wait a bit longer than usual */
   if ((m = m_conn.SendAndWait(method, m, 30)) == NULL)
-  {
-    tvherror("failed to cancel/delete DVR entry");
     return PVR_ERROR_SERVER_ERROR;
-  }
 
   /* Check for error */
-  if ((str = htsmsg_get_str(m, "error")) != NULL)
-  {
-    tvherror("failed to cancel/delete DVR entry [%s]", str);
-  }
-  else if (htsmsg_get_u32(m, "success", &u32))
+  if (htsmsg_get_u32(m, "success", &u32))
   {
     tvherror("failed to parse cancelDvrEntry response");
   }
@@ -283,7 +272,6 @@ PVR_ERROR CTvheadend::SendDvrDelete ( uint32_t id, const char *method )
 
 PVR_ERROR CTvheadend::SendDvrUpdate( htsmsg_t* m )
 {
-  const char *str;
   uint32_t u32;
 
   /* Send and Wait */
@@ -293,17 +281,10 @@ PVR_ERROR CTvheadend::SendDvrUpdate( htsmsg_t* m )
   }
 
   if (m == NULL)
-  {
-    tvherror("failed to update DVR entry");
     return PVR_ERROR_SERVER_ERROR;
-  }
 
   /* Check for error */
-  if ((str = htsmsg_get_str(m, "error")) != NULL)
-  {
-    tvherror("failed to update DVR entry [%s]", str);
-  }
-  else if (htsmsg_get_u32(m, "success", &u32))
+  if (htsmsg_get_u32(m, "success", &u32))
   {
     tvherror("failed to parse updateDvrEntry response");
   }
@@ -429,10 +410,7 @@ PVR_ERROR CTvheadend::GetRecordingEdl
     CLockObject lock(m_conn.Mutex());
     
     if ((m = m_conn.SendAndWait("getDvrCutpoints", m)) == NULL)
-    {
-      tvherror("failed to update DVR entry");
       return PVR_ERROR_SERVER_ERROR;
-    }
   }
 
   /* Validate */
@@ -579,7 +557,6 @@ PVR_ERROR CTvheadend::GetTimers ( ADDON_HANDLE handle )
 
 PVR_ERROR CTvheadend::AddTimer ( const PVR_TIMER &timer )
 {
-  const char *str;
   uint32_t u32;
   dvr_prio_t prio;
 
@@ -625,17 +602,10 @@ PVR_ERROR CTvheadend::AddTimer ( const PVR_TIMER &timer )
   }
 
   if (m == NULL)
-  {
-    tvherror("failed to add DVR entry");
     return PVR_ERROR_SERVER_ERROR;
-  }
 
   /* Check for error */
-  if ((str = htsmsg_get_str(m, "error")) != NULL)
-  {
-    tvherror("failed to add DVR entry [%s]", str);
-  }
-  else if (htsmsg_get_u32(m, "success", &u32))
+  if (htsmsg_get_u32(m, "success", &u32))
   {
     tvherror("failed to parse addDvrEntry response");
   }
@@ -779,10 +749,7 @@ PVR_ERROR CTvheadend::GetEpg
       CLockObject lock(m_conn.Mutex());
       
       if ((msg = m_conn.SendAndWait0("getEvents", msg)) == NULL)
-      {
-        tvherror("failed to request epg");
         return PVR_ERROR_SERVER_ERROR;
-      }
     }
 
     /* Process */
@@ -848,10 +815,8 @@ bool CTvheadend::Connected ( void )
   //htsmsg_add_u32(msg, "epgMaxTime", 0);
   //htsmsg_add_s64(msg, "lastUpdate", 0);
   if ((msg = m_conn.SendAndWait0("enableAsyncMetadata", msg)) == NULL)
-  {
-    tvherror("failed to request async updates");
     return false;
-  }
+
   htsmsg_destroy(msg);
   tvhdebug("async updates requested");
 

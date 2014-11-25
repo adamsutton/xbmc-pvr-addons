@@ -89,7 +89,6 @@ class CHTSPResponse;
 class CHTSPMessage;
 
 /* Typedefs */
-typedef std::runtime_error AuthException;
 typedef std::map<uint32_t,CHTSPResponse*> CHTSPResponseList;
 typedef PLATFORM::SyncedBuffer<CHTSPMessage> CHTSPMessageQueue;
 
@@ -205,7 +204,7 @@ private:
   void        Register         ( void );
   bool        ReadMessage      ( void );
   bool        SendHello        ( void );
-  void        SendAuth         ( const CStdString &u, const CStdString &p );
+  bool        SendAuth         ( const CStdString &u, const CStdString &p );
 
   PLATFORM::CTcpSocket               *m_socket;
   PLATFORM::CMutex                    m_mutex;

@@ -161,10 +161,7 @@ bool CHTSPDemuxer::Seek
   /* Send and Wait */
   m = m_conn.SendAndWait("subscriptionSeek", m);
   if (!m)
-  {
-    tvherror("failed to send subscriptionSeek");
     return false;
-  }
   
   htsmsg_destroy(m);
 
@@ -230,7 +227,6 @@ PVR_ERROR CHTSPDemuxer::CurrentSignal ( PVR_SIGNAL_STATUS &sig )
 
 void CHTSPDemuxer::SendSubscribe ( bool force )
 {
-  const char *error;
   htsmsg_t *m;
 
   /* Reset status */
@@ -252,19 +248,9 @@ void CHTSPDemuxer::SendSubscribe ( bool force )
   else
     m = m_conn.SendAndWait("subscribe", m);
   if (m == NULL)
-  {
-    tvherror("demux failed to send subscribe");
     return;
-  }
 
-  /* Error */
-  error = htsmsg_get_str(m, "error");
   htsmsg_destroy(m);
-  if (error)
-  {
-    tvherror("demux failed to subscribe: %s", error);
-    return;
-  }
 
   m_subscription.active = true;
   tvhdebug("demux successfully subscribed to %d", m_subscription.channelId);
@@ -272,7 +258,6 @@ void CHTSPDemuxer::SendSubscribe ( bool force )
 
 void CHTSPDemuxer::SendUnsubscribe ( void )
 {
-  const char *error;
   htsmsg_t *m;
 
   /* Build message */
@@ -283,22 +268,11 @@ void CHTSPDemuxer::SendUnsubscribe ( void )
   m_subscription.active = false;
   
   /* Send and Wait */
-  tvhdebug("demux unsubcribe from %d", m_subscription.channelId);
+  tvhdebug("demux unsubscribe from %d", m_subscription.channelId);
   if ((m = m_conn.SendAndWait("unsubscribe", m)) == NULL)
-  {
-    tvherror("demux failed to send unsubcribe");
     return;
-  }
 
-  /* Error */
-  error = htsmsg_get_str(m, "error");
   htsmsg_destroy(m);
-  if (error)
-  {
-    tvherror("demux failed to unsubcribe: %s", error);
-    return;
-  }
-
   tvhdebug("demux successfully unsubscribed %d", m_subscription.channelId);
 }
 
