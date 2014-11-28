@@ -1,3 +1,10 @@
+0.9.7
+ - fix potential deadlocks due to overzealous locking (@ksooo)
+ - backport a fix to the threading library which makes the addon work on Mac OS X
+ - don't display connection error popups, let XBMC handle it. This way the "Do not show connection lost warnings" option in XBMC actually works as intended.
+ - fix a rare crash that can happen if the channel list takes too long to import (only seen it happen in the debugger)
+ - fix an integer flow when logging timeshift status
+
 0.9.3
  - no longer triggers updates in XBMC whenever the current programme on a channel changes
  - fix potential crash during channel switching (especially with VAAPI)
