@@ -1,5 +1,7 @@
 0.9.8
  - version bump for Kodi rebranding
+ - cleanup of the response handling code (@ksooo)
+ - properly handle "missed" state in recordings
 
 0.9.7
  - fix potential deadlocks due to overzealous locking (@ksooo)
