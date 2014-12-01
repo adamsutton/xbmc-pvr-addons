@@ -5,7 +5,7 @@
 # how to reach the author.
 #
 
-ADDONBINNAME    = XBMC_pvr_tvh
+ADDONBINNAME    = Kodi_pvr_tvh
 ADDONNAME       = pvr.tvh
 LIBNAME         = lib_pvr_tvh-addon
 lib_LTLIBRARIES = lib_pvr_tvh-addon.la
