@@ -332,9 +332,32 @@ htsmsg_t *CHTSPConnection::SendAndWait0 ( const char *method, htsmsg_t *msg, int
   m_messages.erase(seq);
   if (!msg)
   {
-    tvherror("response not received");
+    //XBMC->QueueNotification(QUEUE_ERROR, "Command %s failed: No response received", method);
+    tvherror("Command %s failed: No response received", method);
     Disconnect();
     return NULL;
+  }
+
+  /* Check result for errors and announce. */
+  uint32_t noaccess;
+  if (!htsmsg_get_u32(msg, "noaccess", &noaccess) && noaccess)
+  {
+    // access denied
+    //XBMC->QueueNotification(QUEUE_ERROR, "Command %s failed: Access denied", method);
+    tvherror("Command %s failed: Access denied", method);
+    htsmsg_destroy(msg);
+    return NULL;
+  }
+  else
+  {
+    const char* strError;
+    if(strError = htsmsg_get_str(msg, "error"))
+    {
+      //XBMC->QueueNotification(QUEUE_ERROR, "Command %s failed: %s", method, strError);
+      tvherror("Command %s failed: %s", method, strError);
+      htsmsg_destroy(msg);
+      return NULL;
+    }
   }
 
   return msg;
@@ -404,7 +427,7 @@ bool CHTSPConnection::SendHello ( void )
   return true;
 }
 
-void CHTSPConnection::SendAuth
+bool CHTSPConnection::SendAuth
   ( const CStdString &user, const CStdString &pass )
 {
   htsmsg_t *msg = htsmsg_create_map();
@@ -423,18 +446,9 @@ void CHTSPConnection::SendAuth
   free(sha);
 
   /* Send and Wait */
-  if (!(msg = SendAndWait0("authenticate", msg)))
-  {
-    htsmsg_destroy(msg);
-    throw new AuthException("No auth response receieved");
-  }
+  msg = SendAndWait0("authenticate", msg);
 
-  /* Auth denied */
-  if (htsmsg_get_u32_or_default(msg, "noaccess", 0) != 0)
-  {
-    htsmsg_destroy(msg);
-    throw new AuthException("Invalid username or password");
-  }
+  return (msg != NULL);
 }
 
 /**
@@ -461,16 +475,8 @@ void CHTSPConnection::Register ( void )
     /* Send Auth */
     tvhdebug("sending auth");
     
-    try
-    {
-      SendAuth(user, pass);
-    }
-    catch (AuthException *e)
-    {
-      XBMC->QueueNotification(QUEUE_ERROR, "Authenication failed: %s", e->what());
-      tvherror("Authenication failed: %s", e->what());
+    if (!SendAuth(user, pass))
       goto fail;
-    }
 
     /* Rebuild state */
     tvhdebug("rebuilding state");

@@ -126,10 +126,7 @@ int CHTSPVFS::Read ( unsigned char *buf, unsigned int len )
     }
       
     if (m == NULL)
-    {
-      tvherror("vfs fileRead failed to send");
       return -1;
-    }
 
     /* Process */
     if (htsmsg_get_bin(m, "data", &buf, &len))
@@ -185,10 +182,7 @@ long long CHTSPVFS::Size ( void )
   
   /* Send */
   if ((m = m_conn.SendAndWait("fileStat", m)) == NULL)
-  {
-    tvherror("vfs fileStat failed");
     return -1;
-  }
 
   /* Process */
   if (htsmsg_get_s64(m, "size", &ret))
@@ -220,10 +214,7 @@ bool CHTSPVFS::SendFileOpen ( bool force )
   else
     m = m_conn.SendAndWait("fileOpen", m);
   if (m == NULL)
-  {
-    tvherror("vfs fileOpen failed");
     return false;
-  }
 
   /* Get ID */
   htsmsg_get_u32(m, "id", &m_fileId);
@@ -274,10 +265,7 @@ long long CHTSPVFS::SendFileSeek ( int64_t pos, int whence, bool force )
   else
     m = m_conn.SendAndWait("fileSeek", m);
   if (m == NULL)
-  {
-    tvherror("vfs failed to send fileSeek");
     return false;
-  }
 
   /* Get new offset */
   if (htsmsg_get_s64(m, "offset", &ret))
