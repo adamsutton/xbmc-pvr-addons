@@ -231,7 +231,7 @@ bool CHTSPConnection::ReadMessage ( void )
   /* Deserialize */
   if (!(msg = htsmsg_binary_deserialize(buf, len, buf)))
   {
-    free(buf);
+    /* Do not free buf here. Already done by htsmsg_binary_deserialize. */
     tvherror("failed to decode message");
     return false;
   }
