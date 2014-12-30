@@ -24,9 +24,10 @@
 
 using namespace PLATFORM;
 
-AsyncState::AsyncState()
+AsyncState::AsyncState(int timeout)
 {
   m_state = ASYNC_NONE;
+  m_timeout = timeout;
 }
 
 void AsyncState::SetState(eAsyncState state)
@@ -40,10 +41,7 @@ bool AsyncState::WaitForState(eAsyncState state, int timeoutMs /* = -1*/)
 {
   /* Use global default */
   if (timeoutMs == -1)
-  {
-    CLockObject lock(g_mutex);
-    timeoutMs = g_iResponseTimeout * 1000;
-  }
+    timeoutMs = m_timeout * 1000;
   
   CTimeout timeout(timeoutMs);
   CLockObject lock(m_mutex);

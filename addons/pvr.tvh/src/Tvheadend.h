@@ -30,6 +30,7 @@
 #include "xbmc_stream_utils.hpp"
 #include "libXBMC_addon.h"
 #include "CircBuffer.h"
+#include "Settings.h"
 #include "HTSPTypes.h"
 #include "AsyncState.h"
 #include <map>
@@ -63,10 +64,10 @@ extern "C" {
 /*
  * Log wrappers
  */
-#define tvhdebug(...) tvhlog(LOG_DEBUG, ##__VA_ARGS__)
-#define tvhinfo(...)  tvhlog(LOG_INFO,  ##__VA_ARGS__)
-#define tvherror(...) tvhlog(LOG_ERROR, ##__VA_ARGS__)
-#define tvhtrace(...) if (g_bTraceDebug) tvhlog(LOG_DEBUG, ##__VA_ARGS__)
+#define tvhdebug(...) tvhlog(ADDON::LOG_DEBUG, ##__VA_ARGS__)
+#define tvhinfo(...)  tvhlog(ADDON::LOG_INFO,  ##__VA_ARGS__)
+#define tvherror(...) tvhlog(ADDON::LOG_ERROR, ##__VA_ARGS__)
+#define tvhtrace(...) if (tvh->GetSettings().bTraceDebug) tvhlog(ADDON::LOG_DEBUG, ##__VA_ARGS__)
 static inline void tvhlog ( ADDON::addon_log_t lvl, const char *fmt, ... )
 {
   char buf[16384];
@@ -81,7 +82,6 @@ static inline void tvhlog ( ADDON::addon_log_t lvl, const char *fmt, ... )
 /*
  * Forward decleration of classes
  */
-class CTvheadend;
 class CHTSPConnection;
 class CHTSPDemuxer;
 class CHTSPVFS;
@@ -91,11 +91,6 @@ class CHTSPMessage;
 /* Typedefs */
 typedef std::map<uint32_t,CHTSPResponse*> CHTSPResponseList;
 typedef PLATFORM::SyncedBuffer<CHTSPMessage> CHTSPMessageQueue;
-
-/*
- * Global (TODO: might want to change this)
- */
-extern CTvheadend *tvh;
 
 /*
  * HTSP Response handler
@@ -314,6 +309,8 @@ private:
   bool      SendFileOpen  ( bool force = false );
   void      SendFileClose ( void );
   long long SendFileSeek  ( int64_t pos, int whence, bool force = false );
+  
+  const int MAX_BUFFER_SIZE = 1000000;
 };
 
 /*
@@ -323,7 +320,7 @@ class CTvheadend
   : public PLATFORM::CThread
 {
 public:
-  CTvheadend();
+  CTvheadend(tvheadend::Settings settings);
   ~CTvheadend();
 
   void Start ( void );
@@ -331,6 +328,10 @@ public:
   void Disconnected   ( void );
   bool Connected      ( void );
   bool ProcessMessage ( const char *method, htsmsg_t *msg );
+
+  inline const tvheadend::Settings& GetSettings() {
+    return m_settings;
+  };
 
   PVR_ERROR GetDriveSpace     ( long long *total, long long *used );
 
@@ -361,6 +362,7 @@ private:
   uint32_t GetNextUnnumberedChannelNumber();
   
   PLATFORM::CMutex            m_mutex;
+  const tvheadend::Settings   m_settings;
   
   CHTSPConnection             m_conn;
   CHTSPDemuxer                m_dmx;

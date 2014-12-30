@@ -42,7 +42,7 @@ enum eAsyncState
 class AsyncState
 {
 public:
-  AsyncState();
+  AsyncState(int timeout);
 
   virtual ~AsyncState()
   {
@@ -78,6 +78,7 @@ private:
   eAsyncState m_state;
   PLATFORM::CMutex m_mutex;
   PLATFORM::CCondition<bool> m_condition;
+  int m_timeout;
 
 };
 

@@ -40,8 +40,9 @@ using namespace std;
 using namespace ADDON;
 using namespace PLATFORM;
 
-CTvheadend::CTvheadend()
-  : m_dmx(m_conn), m_vfs(m_conn), m_queue((size_t) - 1)
+CTvheadend::CTvheadend(tvheadend::Settings settings)
+  : m_settings(settings), m_dmx(m_conn), m_vfs(m_conn), 
+    m_queue((size_t)-1), m_asyncState(settings.iResponseTimeout)
 {
 }
 
@@ -705,7 +706,7 @@ PVR_ERROR CTvheadend::GetEpg
            (long long)start, (long long)end);
 
   /* Async transfer */
-  if (g_bAsyncEpg)
+  if (m_settings.bAsyncEpg)
   {
     if (!m_asyncState.WaitForState(ASYNC_DONE))
       return PVR_ERROR_FAILED;
@@ -811,7 +812,7 @@ bool CTvheadend::Connected ( void )
   m_asyncState.SetState(ASYNC_NONE);
   
   msg = htsmsg_create_map();
-  htsmsg_add_u32(msg, "epg",        g_bAsyncEpg);
+  htsmsg_add_u32(msg, "epg", m_settings.bAsyncEpg);
   //htsmsg_add_u32(msg, "epgMaxTime", 0);
   //htsmsg_add_s64(msg, "lastUpdate", 0);
   if ((msg = m_conn.SendAndWait0("enableAsyncMetadata", msg)) == NULL)
@@ -1019,7 +1020,7 @@ void CTvheadend::SyncDvrCompleted ( void )
 void CTvheadend::SyncEpgCompleted ( void )
 {
   /* Done */
-  if (!g_bAsyncEpg || m_asyncState.GetState() > ASYNC_EPG)
+  if (!m_settings.bAsyncEpg || m_asyncState.GetState() > ASYNC_EPG)
     return;
   
   bool update;
