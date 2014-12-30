@@ -48,3 +48,6 @@ extern int                       g_iConnectTimeout;
 extern int                       g_iResponseTimeout;
 extern bool                      g_bTraceDebug;
 extern bool                      g_bAsyncEpg;
+
+class CTvheadend;
+extern CTvheadend                *tvh;

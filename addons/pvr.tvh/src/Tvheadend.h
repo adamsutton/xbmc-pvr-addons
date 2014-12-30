@@ -81,7 +81,6 @@ static inline void tvhlog ( ADDON::addon_log_t lvl, const char *fmt, ... )
 /*
  * Forward decleration of classes
  */
-class CTvheadend;
 class CHTSPConnection;
 class CHTSPDemuxer;
 class CHTSPVFS;
@@ -91,11 +90,6 @@ class CHTSPMessage;
 /* Typedefs */
 typedef std::map<uint32_t,CHTSPResponse*> CHTSPResponseList;
 typedef PLATFORM::SyncedBuffer<CHTSPMessage> CHTSPMessageQueue;
-
-/*
- * Global (TODO: might want to change this)
- */
-extern CTvheadend *tvh;
 
 /*
  * HTSP Response handler
