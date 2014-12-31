@@ -1,6 +1,5 @@
-#pragma once
 /*
- *      Copyright (C) 2005-2011 Team XBMC
+ *      Copyright (C) 2005-2014 Team XBMC
  *      http://www.xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
@@ -20,23 +19,37 @@
  *
  */
 
-#include "platform/os.h"
-#include "platform/threads/mutex.h"
-#include "libXBMC_addon.h"
-#include "libXBMC_pvr.h"
-#include "libXBMC_gui.h"
-#include "libXBMC_codec.h"
+#include "AsyncState.h"
+#include "client.h"
 
-extern ADDON::CHelper_libXBMC_addon*  XBMC;
-extern CHelper_libXBMC_pvr*           PVR;
-extern CHelper_libXBMC_gui*           GUI;
-extern CHelper_libXBMC_codec*         CODEC;
+using namespace PLATFORM;
 
-#define DEFAULT_HOST             "127.0.0.1"
-#define DEFAULT_HTTP_PORT        9981
-#define DEFAULT_HTSP_PORT        9982
-#define DEFAULT_CONNECT_TIMEOUT  10
-#define DEFAULT_RESPONSE_TIMEOUT 5
+AsyncState::AsyncState(int timeout)
+{
+  m_state = ASYNC_NONE;
+  m_timeout = timeout;
+}
 
-class CTvheadend;
-extern CTvheadend                *tvh;
+void AsyncState::SetState(eAsyncState state)
+{
+  CLockObject lock(m_mutex);
+  m_state = state;
+  m_condition.Broadcast();
+}
+
+bool AsyncState::WaitForState(eAsyncState state, int timeoutMs /* = -1*/)
+{
+  /* Use global default */
+  if (timeoutMs == -1)
+    timeoutMs = m_timeout * 1000;
+  
+  CTimeout timeout(timeoutMs);
+  CLockObject lock(m_mutex);
+
+  /* Loop (until complete or no change) */
+  while (m_state < state && timeout.TimeLeft()) {
+    m_condition.Wait(m_mutex, timeout.TimeLeft());
+  }
+  
+  return m_state >= state;
+}
