@@ -253,6 +253,11 @@ namespace PLATFORM
         return true;
       }
 
+      inline bool Wait(CMutex &mutex, uint32_t iTimeout)
+      {
+        return m_condition.Wait(mutex.m_mutex, iTimeout);
+      }
+
       inline bool Wait(CMutex &mutex, _Predicate &predicate, uint32_t iTimeout)
       {
         if (iTimeout == 0)
