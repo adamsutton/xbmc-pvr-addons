@@ -22,12 +22,17 @@
 #include "AsyncState.h"
 #include "client.h"
 
+struct Param {
+  eAsyncState state;
+  AsyncState *self;
+};
+
 using namespace PLATFORM;
 
 AsyncState::AsyncState(int timeout)
 {
-  m_state = ASYNC_NONE;
-  m_timeout = timeout;
+  m_state   = ASYNC_NONE;
+  m_timeout = timeout * 1000;
 }
 
 void AsyncState::SetState(eAsyncState state)
@@ -37,19 +42,16 @@ void AsyncState::SetState(eAsyncState state)
   m_condition.Broadcast();
 }
 
-bool AsyncState::WaitForState(eAsyncState state, int timeoutMs /* = -1*/)
+bool AsyncState::PredicateCallback ( void *p )
 {
-  /* Use global default */
-  if (timeoutMs == -1)
-    timeoutMs = m_timeout * 1000;
-  
-  CTimeout timeout(timeoutMs);
-  CLockObject lock(m_mutex);
+  Param *param = (Param*)p;
+  return param->self->m_state >= param->state;
+}
 
-  /* Loop (until complete or no change) */
-  while (m_state < state && timeout.TimeLeft()) {
-    m_condition.Wait(m_mutex, timeout.TimeLeft());
-  }
-  
-  return m_state >= state;
+bool AsyncState::WaitForState(eAsyncState state)
+{
+  Param p;
+  p.state = state;
+  p.self  = this;
+  return m_condition.Wait(m_mutex, AsyncState::PredicateCallback, (void*)&p, m_timeout);
 }

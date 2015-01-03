@@ -67,14 +67,14 @@ public:
    * Waits for the current state to change into "state" or higher
    * before the timeout is reached
    * @param state the minimum state desired
-   * @param timeout timeout in milliseconds. Defaults to -1 which means the 
-   * global response timeout will be used.
    * @return whether the state changed or not
    */
-  bool WaitForState(eAsyncState state, int timeoutMs = -1);
+  bool WaitForState(eAsyncState state);
 
 private:
 
+  static bool PredicateCallback ( void *param );
+  
   eAsyncState m_state;
   PLATFORM::CMutex m_mutex;
   PLATFORM::CCondition<bool> m_condition;
