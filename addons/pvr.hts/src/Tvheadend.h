@@ -310,7 +310,7 @@ private:
   void      SendFileClose ( void );
   long long SendFileSeek  ( int64_t pos, int whence, bool force = false );
   
-  const int MAX_BUFFER_SIZE = 1000000;
+  static const int MAX_BUFFER_SIZE = 1000000;
 };
 
 /*
