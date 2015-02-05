@@ -1,7 +1,5 @@
-#pragma once
-
 /*
- *      Copyright (C) 2005-2012 Team XBMC
+ *      Copyright (C) 2005-2014 Team XBMC
  *      http://www.xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
@@ -21,35 +19,41 @@
  *
  */
 
-#include "platform/os.h"
-#include "platform/threads/mutex.h"
+#include "AsyncState.h"
+#include "client.h"
 
-class CCircBuffer
-{
-public:
-  CCircBuffer    (void);
-  ~CCircBuffer   (void);
-
-  void    alloc   (size_t);
-  void    unalloc (void);
-  void    reset   (void);
-
-  size_t  size   (void) const;
-  size_t  avail  (void) const;
-  size_t  free   (void) const;
-
-  ssize_t write  (const unsigned char* data, size_t len);
-  ssize_t read   (unsigned char* data, size_t len);
-
-protected:
-  unsigned char * m_buffer;
-  size_t m_alloc;
-  size_t m_size;
-  size_t m_count;
-  size_t m_pin;
-  size_t m_pout;
-
-private:
-  mutable PLATFORM::CMutex m_mutex;
-
+struct Param {
+  eAsyncState state;
+  AsyncState *self;
 };
+
+using namespace PLATFORM;
+
+AsyncState::AsyncState(int timeout)
+{
+  m_state   = ASYNC_NONE;
+  m_timeout = timeout;
+}
+
+void AsyncState::SetState(eAsyncState state)
+{
+  CLockObject lock(m_mutex);
+  m_state = state;
+  m_condition.Broadcast();
+}
+
+bool AsyncState::PredicateCallback ( void *p )
+{
+  Param *param = (Param*)p;
+  return param->self->m_state >= param->state;
+}
+
+bool AsyncState::WaitForState(eAsyncState state)
+{
+  Param p;
+  p.state = state;
+  p.self  = this;
+
+  CLockObject lock(m_mutex);
+  return m_condition.Wait(m_mutex, AsyncState::PredicateCallback, (void*)&p, m_timeout);
+}

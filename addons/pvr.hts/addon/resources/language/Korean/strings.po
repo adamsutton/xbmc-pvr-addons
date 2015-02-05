@@ -1,7 +1,7 @@
 # Kodi Media Center language file
 # Addon Name: Tvheadend HTSP Client
 # Addon id: pvr.hts
-# Addon Provider: Lars Op den Kamp, Team XBMC
+# Addon Provider: Adam Sutton, Sam Stenvall, Lars Op den Kamp
 msgid ""
 msgstr ""
 "Project-Id-Version: XBMC Main\n"
@@ -17,61 +17,49 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 msgctxt "#30000"
+msgid "Connection Settings"
+msgstr "연결 설정"
+
+msgctxt "#30001"
 msgid "Tvheadend hostname or IP address"
 msgstr "Tvheadend 호스트네임 또는 IP 주소"
 
-msgctxt "#30001"
+msgctxt "#30002"
 msgid "HTTP port"
 msgstr "HTTP 포트"
 
-msgctxt "#30002"
+msgctxt "#30003"
 msgid "HTSP port"
 msgstr "HTSP 포트"
 
-msgctxt "#30003"
+msgctxt "#30004"
 msgid "Username"
 msgstr "사용자명"
 
-msgctxt "#30004"
+msgctxt "#30005"
 msgid "Password"
 msgstr "비밀번호"
 
 msgctxt "#30006"
-msgid "Connect timeout in seconds"
-msgstr "연결시간 제한 (초)"
+msgid "Connection timeout in seconds"
+msgstr "연결 타임아웃 (초)"
 
 msgctxt "#30007"
 msgid "Response timeout in seconds"
 msgstr "응답시간 제한 (초)"
 
 msgctxt "#30100"
-msgid "Tvheadend transcoding settings"
-msgstr "Tvheadend 트랜스코딩 설정"
+msgid "Data Transfer"
+msgstr "데이터 전송"
 
 msgctxt "#30101"
-msgid "Transcoding settings"
-msgstr "트랜스코딩 설정"
+msgid "Asynchronous EPG transfer"
+msgstr "비동기 EPG 전송"
 
-msgctxt "#30102"
-msgid "Enable transcoding"
-msgstr "트랜스코딩 사용"
+msgctxt "#30200"
+msgid "Debugging"
+msgstr "디버깅"
 
-msgctxt "#30103"
-msgid "Audio codec"
-msgstr "오디오 코덱"
-
-msgctxt "#30104"
-msgid "Video codec"
-msgstr "비디오 코덱"
-
-msgctxt "#30105"
-msgid "Resolution"
-msgstr "해상도"
-
-msgctxt "#30500"
-msgid "Disconnected from '%s'"
-msgstr "'%s' 연결 해제됨"
-
-msgctxt "#30501"
-msgid "Reconnected to '%s'"
-msgstr "'%s' 다시 연결됨"
+msgctxt "#30201"
+msgid "Trace (detailed)"
+msgstr "추적 (상세)"
